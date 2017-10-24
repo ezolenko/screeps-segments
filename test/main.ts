@@ -1,29 +1,11 @@
-import { Logger } from "./logger";
-import { SegmentBuffer } from "../src/segments";
+import { run, reset } from "./raw.segment.wrapper.test";
 
-const logger = new Logger();
-const segments = new SegmentBuffer(logger);
-
-function beforeTick()
+export function resetAll()
 {
-	segments.beforeTick();
-}
-
-function tick()
-{
-	//
-}
-
-function afterTick()
-{
-	segments.afterTick();
+	reset();
 }
 
 export function loop()
 {
-	beforeTick();
-
-	tick();
-
-	afterTick();
+	run();
 }

@@ -11,10 +11,15 @@ interface ISegmentsCache
 	[id: string]: ISegmentsCacheEntry;
 }
 
-class RawSegmentWrapper
+export class RawSegmentWrapper
 {
-	private saving: number;
-	private active: Set<number>;
+	private readRequested: Set<number>;
+	private willRead: Set<number>;
+	private writeRequested: Set<number>;
+	private willWrite: Set<number>;
+	private read: Map<number, string>;
+
+	public get maxSegments() { return 100; }
 	public get maxMemory() { return 100 * 1024; }
 	public get maxActive() { return 10; }
 
@@ -24,24 +29,30 @@ class RawSegmentWrapper
 
 	public beforeTick()
 	{
-		this.saving = _.size(RawMemory.segments);
-		this.active = new Set();
+		this.readRequested = new Set();
+		this.willRead = new Set();
+		this.writeRequested = new Set();
+		this.willWrite = new Set();
+		this.read = new Map();
+
+		_.each(RawMemory.segments, (data: string, id) =>
+		{
+			this.read.set(id as any, data);
+			delete RawMemory.segments[id as any];
+		});
 	}
 
 	public afterTick()
 	{
-		let ids: number[] = [... this.active];
-		if (this.active.size > this.maxActive)
-		{
-			this.log.error(`segments: trying to request ${this.active.size} segments`);
-			ids = ids.sort().slice(0, this.maxActive);
-		}
+		const ids: number[] = [... this.willRead];
 		RawMemory.setActiveSegments(ids);
+
+		this.read.clear();
 	}
 
 	private checkId(id: number): boolean
 	{
-		if (!Number.isInteger(id))
+		if (!Number.isInteger(id) || id < 0 || id >= this.maxSegments)
 		{
 			this.log.error(`segments: invalid id '${id}'`);
 			return false;
@@ -51,17 +62,17 @@ class RawSegmentWrapper
 
 	public getSegment(id: number): string | undefined
 	{
-		if (!this.checkId(id))
-			return undefined;
-		return RawMemory.segments[id];
+		return this.read.get(id);
 	}
 
 	public saveSegment(id: number, data: string): boolean
 	{
-		if (this.saving > this.maxActive)
+		if (!this.checkId(id))
 			return false;
 
-		if (!this.checkId(id))
+		this.writeRequested.add(id);
+
+		if (this.willWrite.size >= this.maxActive)
 			return false;
 
 		if (data.length > this.maxMemory)
@@ -70,7 +81,7 @@ class RawSegmentWrapper
 			return false;
 		}
 
-		this.saving++;
+		this.willWrite.add(id);
 		RawMemory.segments[id] = data;
 
 		return true;
@@ -81,28 +92,69 @@ class RawSegmentWrapper
 		if (!this.checkId(id))
 			return false;
 
-		if (!_.has(RawMemory.segments, id))
-			return false;
+		if (this.willWrite.delete(id))
+		{
+			this.writeRequested.delete(id);
+			delete RawMemory.segments[id];
+			return true;
+		}
 
-		this.saving--;
-		delete RawMemory.segments[id];
-		return true;
+		return false;
 	}
 
 	public requestSegment(id: number): boolean
 	{
-		if (!this.checkId(id) || this.active.size >= this.maxActive)
+		if (!this.checkId(id))
 			return false;
 
-		this.active.add(id);
+		this.readRequested.add(id);
+
+		if (this.willRead.size >= this.maxActive)
+			return false;
+
+		this.willRead.add(id);
+
 		return true;
 	}
 
-	public getAvailableSegments(): Set<number>
+	public visualize(sx: number, sy: number)
 	{
-		if (!RawMemory.segments)
-			return new Set();
-		return new Set(_.keys(RawMemory.segments).map(Number));
+		const visual = new RoomVisual();
+
+		const segmentIdStyle: TextStyle = {};
+
+		const cellStyle: PolyStyle = { fill: "white", stroke: "gray", strokeWidth: 0.1 };
+		const read: PolyStyle = { fill: "blue", stroke: "blue", strokeWidth: 0.1 };
+		const written: PolyStyle = { fill: "green", stroke: "green", strokeWidth: 0.1 };
+
+		const readRequested: CircleStyle = { radius: 0.1, fill: "blue" };
+		const writeRequested: CircleStyle = { radius: 0.1, fill: "green" };
+
+		for (let row = 1; row <= 4; row++)
+			for (let column = 1; column <= 20; column++)
+			{
+				const id = row * column;
+				const x = sx + column;
+				const y = sy + row;
+
+				visual.rect(x - 0.5, y - 0.5, 1, 1, cellStyle);
+
+				if (this.read.has(id))
+					visual.rect(x - 0.5, y - 0.5, 1, 0.3, read);
+
+				if (this.willWrite.has(id))
+					visual.rect(x - 0.5, y + 0.3, 0.5, 0.3, written);
+				if (this.willRead.has(id))
+					visual.rect(x, y + 0.3, 0.5, 0.3, read);
+
+				if (this.readRequested.has(id))
+					visual.circle(x - 0.3, y - 0.3, readRequested);
+
+				if (this.writeRequested.has(id))
+					visual.circle(x - 0.3, y + 0.3, writeRequested);
+
+				visual.text(`${id}`, x, y, segmentIdStyle);
+			}
 	}
 }
 
