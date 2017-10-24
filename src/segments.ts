@@ -117,7 +117,7 @@ export class RawSegmentWrapper
 		return true;
 	}
 
-	public visualize(sx: number, sy: number)
+	public visualize(sx: number, sy: number, scale: number)
 	{
 		const visual = new RoomVisual();
 
@@ -127,33 +127,33 @@ export class RawSegmentWrapper
 		const read: PolyStyle = { fill: "blue", stroke: "blue", strokeWidth: 0.1 };
 		const written: PolyStyle = { fill: "green", stroke: "green", strokeWidth: 0.1 };
 
-		const readRequested: CircleStyle = { radius: 0.1, fill: "blue" };
-		const writeRequested: CircleStyle = { radius: 0.1, fill: "green" };
+		const readRequested: CircleStyle = { radius: 0.1 * scale, fill: "blue" };
+		const writeRequested: CircleStyle = { radius: 0.1 * scale, fill: "green" };
 
-		for (let row = 1; row <= 4; row++)
+		for (let row = 0; row < 5; row++)
 			for (let column = 1; column <= 20; column++)
 			{
-				const id = row * column;
-				const x = sx + column;
-				const y = sy + row;
+				const id = 20 * row + column;
+				const x = sx + column * scale;
+				const y = sy + row * scale;
 
-				visual.rect(x - 0.5, y - 0.5, 1, 1, cellStyle);
+				visual.rect(x, y, 1 * scale, 1 * scale, cellStyle);
 
 				if (this.read.has(id))
-					visual.rect(x - 0.5, y - 0.5, 1, 0.3, read);
+					visual.rect(x, y, 1 * scale, 0.3 * scale, read);
 
 				if (this.willWrite.has(id))
-					visual.rect(x - 0.5, y + 0.3, 0.5, 0.3, written);
+					visual.rect(x, y + 0.7 * scale, 0.5 * scale, 0.3 * scale, written);
 				if (this.willRead.has(id))
-					visual.rect(x, y + 0.3, 0.5, 0.3, read);
+					visual.rect(x + 0.5 * scale, y + 0.7 * scale, 0.5 * scale, 0.3 * scale, read);
 
 				if (this.readRequested.has(id))
-					visual.circle(x - 0.3, y - 0.3, readRequested);
+					visual.circle(x + 0.3, y + 0.3, readRequested);
 
 				if (this.writeRequested.has(id))
-					visual.circle(x - 0.3, y + 0.3, writeRequested);
+					visual.circle(x + 0.3, y + 0.3, writeRequested);
 
-				visual.text(`${id}`, x, y, segmentIdStyle);
+				visual.text(`${id}`, x + 0.5 * scale, y + 0.5 * scale, segmentIdStyle);
 			}
 	}
 }
