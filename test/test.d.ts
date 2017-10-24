@@ -1,6 +1,7 @@
 interface IRawSegmentTestMemory
 {
-	start: number;
+	start?: number;
+	checked?: { [id: number]: boolean };
 }
 
 interface ITestMemory
