@@ -1,0 +1,6 @@
+{
+  "name": "ezolenko-screeps-segments",
+  "globalDependencies": {
+    "screeps-typed": "github:ezolenko/screeps-typed#master"
+  }
+}

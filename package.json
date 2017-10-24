@@ -1,0 +1,32 @@
+{
+  "name": "screeps-segments",
+  "version": "0.0.0",
+  "description": "",
+  "main": "./dist/lib/lib.js",
+  "repository": "ezolenko/screeps-segments",
+  "scripts": {
+    "postinstall": "typings install",
+    "tslint": "tslint 'src/**/*.ts'; echo",
+    "typings": "typings",
+    "build-lib": "rollup -c rollup.config.lib.js",
+    "build-test": "rollup -c rollup.config.test.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^7.0.13",
+    "@types/source-map": "^0.5.1",
+    "@types/lodash": "^3.10.2",
+    "rollup": "^0.50.0",
+    "rollup-plugin-cleanup": "1.0.1",
+    "rollup-plugin-commonjs": "^8.2.1",
+    "rollup-plugin-filesize": "^1.4.1",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-progress": "^0.4.0",
+    "rollup-plugin-typescript2": "git+https://github.com/ezolenko/rollup-plugin-typescript2#master",
+    "tslib": "^1.8.0",
+    "tslint": "5.8.0",
+    "typescript": "^2.5.3",
+    "typings": "2.1.1"
+  }
+}

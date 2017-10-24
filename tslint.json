@@ -1,0 +1,41 @@
+{
+  "jsRules": {
+    "object-literal-sort-keys": false,
+    "one-line": [false],
+    "curly": false,
+    "no-console": [false],
+    "max-line-length": [false],
+    "indent": [true, "tabs"]
+  },
+  "extends" : [
+    "tslint:recommended"
+  ],
+  "rules": {
+    "forin": false,
+    "interface-name": [false],
+    "no-console": [false],
+    "indent": [true, "tabs"],
+    "variable-name":
+    [
+      true,
+      "ban-keywords",
+      "check-format",
+      "allow-pascal-case",
+      "allow-leading-underscore"
+    ],
+    "one-line": [false],
+    "max-line-length": [false],
+    "object-literal-sort-keys": false,
+    "curly": false,
+    "ordered-imports": [false],
+    "only-arrow-functions": [false],
+    "class-name": false,
+    "member-ordering": [false],
+    "comment-format": [false],
+    "interface-over-type-literal": false,
+    "prefer-for-of": false,
+    "ban-types": false,
+    "no-shadowed-variable": false,
+    "max-classes-per-file": false
+  }
+}
