@@ -78,8 +78,8 @@ function checkSegments(): boolean
 		}
 		else
 		{
-			if (!data.startsWith(`${id}:`) || data.length === wrapper.maxMemory)
-				logger.error(`${id}: bad data: ${data}`);
+			if (!data.startsWith(`${id}:`) || data.length !== wrapper.maxMemory)
+				logger.error(`${id}: bad data: ${data.slice(0, 10)}, length: ${data.length}`);
 
 			Memory.__test.raw.checked[id] = true;
 		}

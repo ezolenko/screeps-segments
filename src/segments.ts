@@ -35,10 +35,14 @@ export class RawSegmentWrapper
 		this.willWrite = new Set();
 		this.read = new Map();
 
-		_.each(RawMemory.segments, (data: string, id) =>
+		_.each(RawMemory.segments, (data: string, key) =>
 		{
-			this.read.set(id as any, data);
-			delete RawMemory.segments[id as any];
+			const id = this.checkId(key);
+			if (id !== undefined && data !== undefined)
+			{
+				this.read.set(id, data);
+				delete RawMemory.segments[id];
+			}
 		});
 	}
 
@@ -50,52 +54,56 @@ export class RawSegmentWrapper
 		this.read.clear();
 	}
 
-	private checkId(id: number): boolean
+	private checkId(id: number | string | undefined): number | undefined
 	{
-		if (!Number.isInteger(id) || id < 0 || id >= this.maxSegments)
+		const fixed = Number(id);
+		if (!Number.isInteger(fixed) || fixed < 0 || fixed >= this.maxSegments)
 		{
 			this.log.error(`segments: invalid id '${id}'`);
-			return false;
+			return undefined;
 		}
-		return true;
+		return fixed;
 	}
 
 	public getSegment(id: number): string | undefined
 	{
-		return this.read.get(id);
+		const fixed = this.checkId(id);
+		return fixed === undefined ? undefined : this.read.get(fixed);
 	}
 
 	public saveSegment(id: number, data: string): boolean
 	{
-		if (!this.checkId(id))
+		const fixed = this.checkId(id);
+		if (fixed === undefined)
 			return false;
 
-		this.writeRequested.add(id);
+		this.writeRequested.add(fixed);
 
 		if (this.willWrite.size >= this.maxActive)
 			return false;
 
 		if (data.length > this.maxMemory)
 		{
-			this.log.error(`segments: trying to save ${data.length / 1024} Kb to segment ${id}`);
+			this.log.error(`segments: trying to save ${data.length / 1024} Kb to segment ${fixed}`);
 			return false;
 		}
 
-		this.willWrite.add(id);
-		RawMemory.segments[id] = data;
+		this.willWrite.add(fixed);
+		RawMemory.segments[fixed] = data;
 
 		return true;
 	}
 
 	public deleteSegment(id: number): boolean
 	{
-		if (!this.checkId(id))
+		const fixed = this.checkId(id);
+		if (fixed === undefined)
 			return false;
 
-		if (this.willWrite.delete(id))
+		if (this.willWrite.delete(fixed))
 		{
-			this.writeRequested.delete(id);
-			delete RawMemory.segments[id];
+			this.writeRequested.delete(fixed);
+			delete RawMemory.segments[fixed];
 			return true;
 		}
 
@@ -104,15 +112,16 @@ export class RawSegmentWrapper
 
 	public requestSegment(id: number): boolean
 	{
-		if (!this.checkId(id))
+		const fixed = this.checkId(id);
+		if (fixed === undefined)
 			return false;
 
-		this.readRequested.add(id);
+		this.readRequested.add(fixed);
 
 		if (this.willRead.size >= this.maxActive)
 			return false;
 
-		this.willRead.add(id);
+		this.willRead.add(fixed);
 
 		return true;
 	}
@@ -131,7 +140,7 @@ export class RawSegmentWrapper
 		const writeRequested: CircleStyle = { radius: 0.1 * scale, fill: "green" };
 
 		for (let row = 0; row < 5; row++)
-			for (let column = 1; column <= 20; column++)
+			for (let column = 0; column < 20; column++)
 			{
 				const id = 20 * row + column;
 				const x = sx + column * scale;
