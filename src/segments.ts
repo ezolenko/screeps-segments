@@ -89,6 +89,7 @@ export class RawSegmentWrapper
 		}
 
 		this.willWrite.add(fixed);
+		this.read.set(fixed, data);
 		RawMemory.segments[fixed] = data;
 
 		return true;
