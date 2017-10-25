@@ -72,7 +72,10 @@ function checkSegments(): boolean
 
 		const data = wrapper.getSegment(id);
 		if (data === undefined)
+		{
 			wrapper.requestSegment(id);
+			Memory.__test.raw.checked[id] = false;
+		}
 		else
 		{
 			if (!data.startsWith(`${id}:`) || data.length === wrapper.maxMemory)
