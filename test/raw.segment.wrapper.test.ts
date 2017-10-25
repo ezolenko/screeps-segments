@@ -29,7 +29,8 @@ function fillAllSegments(): boolean
 	if (id >= wrapper.maxSegments)
 		Memory.__test.raw.start = id;
 
-	logger.error(`filling: ${ids.join(", ")}`);
+	if (ids.length > 0)
+		logger.error(`filling: ${ids.join(", ")}`);
 
 	return id >= wrapper.maxSegments;
 }
@@ -53,18 +54,18 @@ function clearAllSegments(): boolean
 	if (id >= wrapper.maxSegments)
 		Memory.__test.raw.clearStart = id;
 
-	logger.error(`clearing: ${ids.join(", ")}`);
+	if (ids.length > 0)
+		logger.error(`clearing: ${ids.join(", ")}`);
 
 	return id >= wrapper.maxSegments;
 }
 
 function checkSegments(): boolean
 {
-	logger.error(`checking`);
-
 	if (Memory.__test.raw.checked === undefined)
 		Memory.__test.raw.checked = {};
 
+	logger.error(`checking`);
 	for (let id = 0; id < wrapper.maxSegments; ++id)
 	{
 		if (Memory.__test.raw.checked[id])
@@ -85,7 +86,7 @@ function checkSegments(): boolean
 		}
 	}
 
-	return _.all(Memory.__test.raw.checked, (e) => e === true);
+	return _.all(Memory.__test.raw.checked);
 }
 
 export function run()
