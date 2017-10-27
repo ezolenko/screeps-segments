@@ -22,6 +22,7 @@ class TestRunner extends ScreepsTest<ITestRunnerMemory>
 		super();
 
 		this.memory.current = this.memory.current || 0;
+		this.memory.reports = this.memory.reports || [];
 
 		if (!testRegistrySorted)
 		{

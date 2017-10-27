@@ -3,15 +3,7 @@ import { logger } from "../harness/logger";
 import { ScreepsTest } from "../harness/test";
 import { TestDefinition } from "../harness/runner";
 
-const wrapper = new SegmentsBasicWrapper(logger);
-
-function generateData(version: number, id: number, size: number = wrapper.maxMemory)
-{
-	const prefix = `${id}: ${version}`;
-	return prefix + _.repeat("+", size - prefix.length);
-}
-
-export interface IOwnMemory
+export interface ISegmentsBasicWrapperTestMemory
 {
 	start?: number;
 	clearStart?: number;
@@ -19,28 +11,30 @@ export interface IOwnMemory
 }
 
 @TestDefinition(0)
-export class RawSegmentWrapperTest extends ScreepsTest<IOwnMemory>
+export class SegmentsBasicWrapperTest extends ScreepsTest<ISegmentsBasicWrapperTestMemory>
 {
+	private static wrapper = new SegmentsBasicWrapper(logger);
+
 	public beforeTick()
 	{
 		super.beforeTick();
 
-		this.profileObject(wrapper, "RawSegmentWrapper");
+		this.profileObject(SegmentsBasicWrapperTest.wrapper, "RawSegmentWrapper");
 
-		wrapper.beforeTick();
+		SegmentsBasicWrapperTest.wrapper.beforeTick();
 	}
 
 	public afterTick()
 	{
-		wrapper.visualize(1, 1, 2);
-		wrapper.afterTick();
+		SegmentsBasicWrapperTest.wrapper.visualize(1, 1, 2);
+		SegmentsBasicWrapperTest.wrapper.afterTick();
 
 		super.afterTick();
 	}
 
 	public run(): boolean
 	{
-		return this.runSequence(5,
+		return this.runSequence(2,
 		[
 			(iteration) => { logger.error(`iteration: ${iteration}`); return true; },
 			() => this.fillAllSegments(),
@@ -63,10 +57,10 @@ export class RawSegmentWrapperTest extends ScreepsTest<IOwnMemory>
 		let id = this.memory.start || 0;
 
 		const ids: number[] = [];
-		for (; id < wrapper.maxSegments; ++id)
+		for (; id < SegmentsBasicWrapperTest.wrapper.maxSegments; ++id)
 		{
-			const data = generateData(1, id);
-			if (!wrapper.saveSegment(id, data))
+			const data = this.generateData(1, id);
+			if (!SegmentsBasicWrapperTest.wrapper.saveSegment(id, data))
 			{
 				this.memory.start = id;
 				break;
@@ -74,13 +68,13 @@ export class RawSegmentWrapperTest extends ScreepsTest<IOwnMemory>
 			ids.push(id);
 		}
 
-		if (id >= wrapper.maxSegments)
+		if (id >= SegmentsBasicWrapperTest.wrapper.maxSegments)
 			this.memory.start = id;
 
 		if (ids.length > 0)
 			logger.error(`filling: ${ids.join(", ")}`);
 
-		return id >= wrapper.maxSegments;
+		return id >= SegmentsBasicWrapperTest.wrapper.maxSegments;
 	}
 
 	private checkSegments(): boolean
@@ -89,20 +83,20 @@ export class RawSegmentWrapperTest extends ScreepsTest<IOwnMemory>
 		this.memory.checked = {};
 
 		logger.error(`checking`);
-		for (let id = 0; id < wrapper.maxSegments; ++id)
+		for (let id = 0; id < SegmentsBasicWrapperTest.wrapper.maxSegments; ++id)
 		{
 			if (this.memory.checked[id])
 				continue;
 
-			const data = wrapper.getSegment(id);
+			const data = SegmentsBasicWrapperTest.wrapper.getSegment(id);
 			if (data === undefined)
 			{
-				wrapper.requestSegment(id);
+				SegmentsBasicWrapperTest.wrapper.requestSegment(id);
 				this.memory.checked[id] = false;
 			}
 			else
 			{
-				if (!data.startsWith(`${id}:`) || data.length !== wrapper.maxMemory)
+				if (!data.startsWith(`${id}:`) || data.length !== SegmentsBasicWrapperTest.wrapper.maxMemory)
 					logger.error(`${id}: bad data: ${data.slice(0, 10)}, length: ${data.length}`);
 
 				this.memory.checked[id] = true;
@@ -117,10 +111,10 @@ export class RawSegmentWrapperTest extends ScreepsTest<IOwnMemory>
 		let id = this.memory.clearStart || 0;
 
 		const ids: number[] = [];
-		for (; id < wrapper.maxSegments; ++id)
+		for (; id < SegmentsBasicWrapperTest.wrapper.maxSegments; ++id)
 		{
 			const data = "";
-			if (!wrapper.saveSegment(id, data))
+			if (!SegmentsBasicWrapperTest.wrapper.saveSegment(id, data))
 			{
 				this.memory.clearStart = id;
 				break;
@@ -128,12 +122,18 @@ export class RawSegmentWrapperTest extends ScreepsTest<IOwnMemory>
 			ids.push(id);
 		}
 
-		if (id >= wrapper.maxSegments)
+		if (id >= SegmentsBasicWrapperTest.wrapper.maxSegments)
 			this.memory.clearStart = id;
 
 		if (ids.length > 0)
 			logger.error(`clearing: ${ids.join(", ")}`);
 
-		return id >= wrapper.maxSegments;
+		return id >= SegmentsBasicWrapperTest.wrapper.maxSegments;
+	}
+
+	private generateData(version: number, id: number, size: number = SegmentsBasicWrapperTest.wrapper.maxMemory)
+	{
+		const prefix = `${id}: ${version}`;
+		return prefix + _.repeat("+", size - prefix.length);
 	}
 }
