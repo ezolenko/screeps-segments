@@ -1,12 +1,20 @@
 interface IScreepsTestMemory
 {
     p: any;
-    t?: { [id: string]: number | undefined; };
+    timers?: { [id: string]: number | undefined; };
 	runOnce?: 1;
     runSeq?: number;
     runSeqRepeat?: number;
 	runAll?: Array<0 | 1>;
-	runAllDone?: 1;
+    runAllDone?: 1;
+    cpu:
+    {
+        [label: string]:
+        {
+            total: number;
+            times: number;
+        }
+    };
 }
 
 interface ITestHarnessMemory
@@ -25,6 +33,7 @@ interface IScreepsTest
     run(): boolean;
     afterTick(): void;
     cleanup(): void;
+    report(): string;
 }
 
 interface Global

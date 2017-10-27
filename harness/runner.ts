@@ -4,6 +4,7 @@ import { logger } from "../harness/logger";
 interface ITestRunnerMemory
 {
 	current: number;
+	reports: string[];
 }
 
 let testRegistrySorted = false;
@@ -65,9 +66,15 @@ class TestRunner extends ScreepsTest<ITestRunnerMemory>
 		{
 			logger.error(`completed ${this.current.constructor.name}`);
 
+			this.memory.reports.push(this.test.report());
 			this.test.cleanup();
 			this.memory.current++;
 		}
+	}
+
+	public report()
+	{
+		return this.memory.reports.join("\n");
 	}
 }
 
@@ -80,6 +87,9 @@ export function runAllTests()
 	const res = runner.run();
 
 	runner.afterTick();
+
+	if (res)
+		logger.error(runner.report());
 
 	return res;
 }

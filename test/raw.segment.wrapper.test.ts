@@ -25,6 +25,8 @@ export class RawSegmentWrapperTest extends ScreepsTest<IOwnMemory>
 	{
 		super.beforeTick();
 
+		this.profileObject(wrapper, "RawSegmentWrapper");
+
 		wrapper.beforeTick();
 	}
 
