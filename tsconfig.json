@@ -35,8 +35,8 @@
   },
   "include": [
     "typings/**/*.d.ts",
-    "src/**/*.d.ts",
     "src/**/*.ts",
+    "harness/**/*.ts",
     "lib/**/*.ts",
     "test/**/*.ts"
   ],

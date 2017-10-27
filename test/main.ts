@@ -1,11 +1,7 @@
-import { run, reset } from "./raw.segment.wrapper.test";
-
-export function resetAll()
-{
-	reset();
-}
+import "./raw.segment.wrapper.test";
+import { runAllTests } from "../harness/runner";
 
 export function loop()
 {
-	run();
+	runAllTests();
 }

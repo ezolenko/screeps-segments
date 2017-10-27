@@ -1,7 +1,8 @@
-import { Logger } from "./logger";
+import { logger } from "../harness/logger";
 import { RawSegmentWrapper } from "../src/segments";
+import { ScreepsTest } from "../harness/test";
+import { TestDefinition } from "../harness/runner";
 
-const logger = new Logger();
 const wrapper = new RawSegmentWrapper(logger);
 
 function generateData(version: number, id: number, size: number = wrapper.maxMemory)
@@ -10,103 +11,127 @@ function generateData(version: number, id: number, size: number = wrapper.maxMem
 	return prefix + _.repeat("+", size - prefix.length);
 }
 
-function fillAllSegments(): boolean
+export interface IOwnMemory
 {
-	let id = Memory.__test.raw.start || 0;
+	start?: number;
+	clearStart?: number;
+	checked?: { [id: number]: boolean };
+}
 
-	const ids: number[] = [];
-	for (; id < wrapper.maxSegments; ++id)
+@TestDefinition(0)
+export class RawSegmentWrapperTest extends ScreepsTest<IOwnMemory>
+{
+	public beforeTick()
 	{
-		const data = generateData(1, id);
-		if (!wrapper.saveSegment(id, data))
-		{
-			Memory.__test.raw.start = id;
-			break;
-		}
-		ids.push(id);
+		super.beforeTick();
+
+		wrapper.beforeTick();
 	}
 
-	if (id >= wrapper.maxSegments)
-		Memory.__test.raw.start = id;
-
-	if (ids.length > 0)
-		logger.error(`filling: ${ids.join(", ")}`);
-
-	return id >= wrapper.maxSegments;
-}
-
-function clearAllSegments(): boolean
-{
-	let id = Memory.__test.raw.clearStart || 0;
-
-	const ids: number[] = [];
-	for (; id < wrapper.maxSegments; ++id)
+	public afterTick()
 	{
-		const data = "";
-		if (!wrapper.saveSegment(id, data))
-		{
-			Memory.__test.raw.clearStart = id;
-			break;
-		}
-		ids.push(id);
+		wrapper.visualize(1, 1, 2);
+		wrapper.afterTick();
+
+		super.afterTick();
 	}
 
-	if (id >= wrapper.maxSegments)
-		Memory.__test.raw.clearStart = id;
-
-	if (ids.length > 0)
-		logger.error(`clearing: ${ids.join(", ")}`);
-
-	return id >= wrapper.maxSegments;
-}
-
-function checkSegments(): boolean
-{
-	if (Memory.__test.raw.checked === undefined)
-		Memory.__test.raw.checked = {};
-
-	logger.error(`checking`);
-	for (let id = 0; id < wrapper.maxSegments; ++id)
+	public run(): boolean
 	{
-		if (Memory.__test.raw.checked[id])
-			continue;
-
-		const data = wrapper.getSegment(id);
-		if (data === undefined)
-		{
-			wrapper.requestSegment(id);
-			Memory.__test.raw.checked[id] = false;
-		}
-		else
-		{
-			if (!data.startsWith(`${id}:`) || data.length !== wrapper.maxMemory)
-				logger.error(`${id}: bad data: ${data.slice(0, 10)}, length: ${data.length}`);
-
-			Memory.__test.raw.checked[id] = true;
-		}
+		return this.runSequence(5,
+		[
+			(iteration) => { logger.error(`iteration: ${iteration}`); return true; },
+			() => this.fillAllSegments(),
+			() => this.checkSegments(),
+			() => this.clearAllSegments(),
+			() => this.restart(),
+		]);
 	}
 
-	return _.all(Memory.__test.raw.checked);
-}
+	private restart()
+	{
+		delete this.memory.start;
+		delete this.memory.clearStart;
+		delete this.memory.checked;
+		return true;
+	}
 
-export function run()
-{
-	_.defaultsDeep(Memory, { __test: { raw: {} } });
+	private fillAllSegments(): boolean
+	{
+		let id = this.memory.start || 0;
 
-	wrapper.beforeTick();
+		const ids: number[] = [];
+		for (; id < wrapper.maxSegments; ++id)
+		{
+			const data = generateData(1, id);
+			if (!wrapper.saveSegment(id, data))
+			{
+				this.memory.start = id;
+				break;
+			}
+			ids.push(id);
+		}
 
-	if (fillAllSegments())
-		if (checkSegments())
-			if (clearAllSegments())
-				reset();
+		if (id >= wrapper.maxSegments)
+			this.memory.start = id;
 
-	wrapper.visualize(1, 1, 2);
-	wrapper.afterTick();
-}
+		if (ids.length > 0)
+			logger.error(`filling: ${ids.join(", ")}`);
 
-export function reset()
-{
-	delete Memory.__test.raw.start;
-	delete Memory.__test.raw.checked;
-	delete Memory.__test.raw.clearStart;
+		return id >= wrapper.maxSegments;
+	}
+
+	private checkSegments(): boolean
+	{
+		if (this.memory.checked === undefined)
+		this.memory.checked = {};
+
+		logger.error(`checking`);
+		for (let id = 0; id < wrapper.maxSegments; ++id)
+		{
+			if (this.memory.checked[id])
+				continue;
+
+			const data = wrapper.getSegment(id);
+			if (data === undefined)
+			{
+				wrapper.requestSegment(id);
+				this.memory.checked[id] = false;
+			}
+			else
+			{
+				if (!data.startsWith(`${id}:`) || data.length !== wrapper.maxMemory)
+					logger.error(`${id}: bad data: ${data.slice(0, 10)}, length: ${data.length}`);
+
+				this.memory.checked[id] = true;
+			}
+		}
+
+		return _.all(this.memory.checked);
+	}
+
+	private clearAllSegments(): boolean
+	{
+		let id = this.memory.clearStart || 0;
+
+		const ids: number[] = [];
+		for (; id < wrapper.maxSegments; ++id)
+		{
+			const data = "";
+			if (!wrapper.saveSegment(id, data))
+			{
+				this.memory.clearStart = id;
+				break;
+			}
+			ids.push(id);
+		}
+
+		if (id >= wrapper.maxSegments)
+			this.memory.clearStart = id;
+
+		if (ids.length > 0)
+			logger.error(`clearing: ${ids.join(", ")}`);
+
+		return id >= wrapper.maxSegments;
+	}
 }
