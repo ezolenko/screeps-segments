@@ -1,1 +1,2 @@
-export * from "../src/segments";
+export * from "../src/segments.buffer";
+export * from "../src/segments.basic.wrapper";

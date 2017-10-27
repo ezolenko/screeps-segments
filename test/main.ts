@@ -1,4 +1,4 @@
-import "./raw.segment.wrapper.test";
+import "./segments.basic.wrapper.test";
 import { runAllTests } from "../harness/runner";
 
 export function loop()

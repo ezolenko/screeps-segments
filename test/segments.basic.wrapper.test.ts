@@ -1,9 +1,9 @@
+import { SegmentsBasicWrapper } from "../src/segments.basic.wrapper";
 import { logger } from "../harness/logger";
-import { RawSegmentWrapper } from "../src/segments";
 import { ScreepsTest } from "../harness/test";
 import { TestDefinition } from "../harness/runner";
 
-const wrapper = new RawSegmentWrapper(logger);
+const wrapper = new SegmentsBasicWrapper(logger);
 
 function generateData(version: number, id: number, size: number = wrapper.maxMemory)
 {
