@@ -1,13 +1,16 @@
-// import { TestDefinition } from "../harness/runner";
-// import { ScreepsTest } from "../harness/test";
+import { TestDefinition } from "../harness/runner";
+import { ScreepsTest } from "../harness/test";
 
-// export interface ISegmentsBufferTestMemory
-// {
+export interface ISegmentsBufferTestMemory
+{
 
-// }
+}
 
-// @TestDefinition(0)
-// export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
-// {
-
-// }
+@TestDefinition(0)
+export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
+{
+	public run(): boolean
+	{
+		return true;
+	}
+}
