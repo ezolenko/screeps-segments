@@ -1,5 +1,7 @@
 export abstract class ScreepsTest<M extends {}> implements IScreepsTest
 {
+	protected onCleanup: Array<() => void> = [];
+
 	constructor()
 	{
 		if (Memory.__test_harness === undefined)
@@ -35,12 +37,14 @@ export abstract class ScreepsTest<M extends {}> implements IScreepsTest
 	public report(): string
 	{
 		const grandTotal = _.sum(this.m.cpu, (e) => e.total);
-		const lines = _.map(this.m.cpu, (entry, label) => `\t${label}: average ${(entry.total / entry.times).toFixed(3)}, total ${entry.total}, calls: ${entry.times}, share: ${(entry.total / grandTotal).toFixed(3)}`);
+		const lines = _.map(this.m.cpu, (entry, label) => `\t${label}: average ${(entry.total / entry.times).toFixed(3)}, total ${entry.total.toFixed(3)}, calls: ${entry.times}, share: ${(100 * entry.total / grandTotal).toFixed(3)}%`);
 		return `${this.constructor.name}:\n${lines.join("\n")}`;
 	}
 
 	public cleanup()
 	{
+		this.onCleanup.forEach((c) => c());
+		this.onCleanup = [];
 		delete Memory.__test_harness.suites[this.constructor.name];
 	}
 
@@ -134,9 +138,9 @@ export abstract class ScreepsTest<M extends {}> implements IScreepsTest
 		return res;
 	}
 
-	protected static ProfileObject(object: any, label: string, target: IScreepsTest)
+	protected profileObject(object: any, label: string)
 	{
-		const objectToWrap = object.prototype ? object.prototype : object;
+		const objectToWrap = object.__proto__ ? object.__proto__ : object.prototype ? object.prototype : object;
 
 		if (objectToWrap.__profilerWrapped)
 			return objectToWrap;
@@ -157,17 +161,20 @@ export abstract class ScreepsTest<M extends {}> implements IScreepsTest
 
 			const extendedLabel = `${label}.${functionName}`;
 			const originalFunction = objectToWrap[functionName] as Function;
+			const profiler = this;
 			objectToWrap[functionName] = function()
 			{
 				const start = Game.cpu.getUsed();
 				const result = originalFunction.apply(this, arguments);
-				target.record(extendedLabel, Game.cpu.getUsed() - start);
+				profiler.record(extendedLabel, Game.cpu.getUsed() - start);
 
 				return result;
 			};
+			this.onCleanup.push(() => objectToWrap[functionName] = originalFunction);
 		});
 
 		objectToWrap.__profilerWrapped = true;
+		this.onCleanup.push(() => delete objectToWrap.__profilerWrapped);
 
 		return objectToWrap;
 	}
