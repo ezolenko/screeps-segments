@@ -114,7 +114,7 @@ export abstract class ScreepsTest<M extends {}> implements IScreepsTest
 		return this.m.runAllDone === 1;
 	}
 
-	private record(label: string, used: number)
+	public record(label: string, used: number)
 	{
 		if (this.m.cpu[label] === undefined)
 			this.m.cpu[label] = { total: used, times: 1 };
@@ -134,7 +134,7 @@ export abstract class ScreepsTest<M extends {}> implements IScreepsTest
 		return res;
 	}
 
-	protected profileObject(object: any, label: string)
+	protected static ProfileObject(object: any, label: string, target: IScreepsTest)
 	{
 		const objectToWrap = object.prototype ? object.prototype : object;
 
@@ -156,13 +156,12 @@ export abstract class ScreepsTest<M extends {}> implements IScreepsTest
 				return;
 
 			const extendedLabel = `${label}.${functionName}`;
-			const originalFunction = objectToWrap[functionName];
-			const profiler = this;
+			const originalFunction = objectToWrap[functionName] as Function;
 			objectToWrap[functionName] = function()
 			{
 				const start = Game.cpu.getUsed();
 				const result = originalFunction.apply(this, arguments);
-				profiler.record(extendedLabel, Game.cpu.getUsed() - start);
+				target.record(extendedLabel, Game.cpu.getUsed() - start);
 
 				return result;
 			};

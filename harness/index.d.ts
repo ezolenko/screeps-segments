@@ -33,12 +33,14 @@ interface IScreepsTest
     run(): boolean;
     afterTick(): void;
     cleanup(): void;
-    report(): string;
+	report(): string;
+	record(label: string, used: number): void;
 }
 
 interface Global
 {
-    testRegistry: Array<{ constructor: new () => IScreepsTest, order: number }>;
+	testRegistry: Array<{ constructor: new () => IScreepsTest, order: number }>;
+	restartTest(): void;
 }
 
 declare var global: Global;

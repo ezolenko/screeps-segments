@@ -107,3 +107,8 @@ export function TestDefinition(order: number)
 		global.testRegistry.push({ constructor, order });
 	};
 }
+
+global.restartTest = function()
+{
+	delete Memory.__test_harness;
+};
