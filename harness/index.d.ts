@@ -1,4 +1,25 @@
-interface IScreepsTestMemory
+interface IScreepsTestProfilerMemory
+{
+	started: number;
+    cpu:
+    {
+        [label: string]:
+        {
+            total: number;
+			calls: number;
+			parentMap: 
+			{
+				[label: string]:
+				{
+					total: number;
+					calls: number;
+				},
+			},
+        }
+    };	
+}
+
+interface IScreepsTestMemory extends IScreepsTestProfilerMemory
 {
     p: any;
     timers?: { [id: string]: number | undefined; };
@@ -7,14 +28,6 @@ interface IScreepsTestMemory
     runSeqRepeat?: number;
 	runAll?: Array<0 | 1>;
     runAllDone?: 1;
-    cpu:
-    {
-        [label: string]:
-        {
-            total: number;
-            times: number;
-        }
-    };
 }
 
 interface ITestHarnessMemory
@@ -34,7 +47,6 @@ interface IScreepsTest
     afterTick(): void;
     cleanup(): void;
 	report(): string;
-	record(label: string, used: number): void;
 }
 
 interface Global
