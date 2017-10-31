@@ -1,22 +1,37 @@
+interface ITestProfilerStats
+{
+	name: string;
+	calls: number;
+	totalTime: number;
+	averageTime: number;
+}
+
+interface ITestProfilerBasicStat
+{
+	totalTime: number;
+	calls: number;
+}
+
+interface ITestProfilerParentMap
+{
+	[parentName: string]: ITestProfilerBasicStat;
+}
+
+interface ITestProfilerFunctionRecord extends ITestProfilerBasicStat
+{
+	parentMap: ITestProfilerParentMap;
+}
+
+interface ITestProfilerProfilerMap
+{
+	[functionName: string]: ITestProfilerFunctionRecord;
+}
+
 interface IScreepsTestProfilerMemory
 {
-	started: number;
-    cpu:
-    {
-        [label: string]:
-        {
-            total: number;
-			calls: number;
-			parentMap: 
-			{
-				[label: string]:
-				{
-					total: number;
-					calls: number;
-				},
-			},
-        }
-    };	
+    started: number;
+    totalTime: number;
+    cpu: ITestProfilerProfilerMap;
 }
 
 interface IScreepsTestMemory extends IScreepsTestProfilerMemory

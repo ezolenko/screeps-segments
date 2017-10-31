@@ -1,3 +1,20 @@
+interface IParentStat
+{
+	name: string;
+	calls: number;
+	totalTime: number;
+	averageTime: number;
+}
+
+interface IProfilerStats
+{
+	name: string;
+	calls: number;
+	totalTime: number;
+	averageTime: number;
+	parentStats: IParentStat[];
+}
+
 export abstract class TestProfiler
 {
 	private currentlyExecuting: string;
@@ -13,18 +30,77 @@ export abstract class TestProfiler
 		this.onCleanup = [];
 	}
 
-	private stats(myMap: IProfilerMap): IProfilerStats[]
+	private stats(myMap: ITestProfilerProfilerMap): IProfilerStats[]
 	{
-		
+		const stats = _.map(myMap, (functionCalls, functionName) =>
+		{
+			return {
+				name: functionName!,
+				calls: functionCalls.calls,
+				totalTime: functionCalls.totalTime,
+				averageTime: functionCalls.totalTime / functionCalls.calls,
+				parentStats: _.map(functionCalls.parentMap, (e, name) => (
+				{
+					name: name!,
+					calls: e.calls,
+					totalTime: e.totalTime,
+					averageTime: e.totalTime / e.calls,
+				})).sort((val1, val2) => val2.totalTime - val1.totalTime),
+			};
+		}).sort((val1, val2) => val2.totalTime - val1.totalTime);
+
+		return stats;
 	}
 
-	public report(): string
+	private lines(stats: IProfilerStats[]): string[]
+	{
+		const lines: string[] = [];
+
+		_.each(stats, (data) =>
+		{
+			lines.push(
+			[
+				data.calls,
+				(100 * data.totalTime / this.m.totalTime).toFixed(2),
+				data.totalTime.toFixed(1),
+				data.averageTime.toFixed(5),
+				data.name,
+			].join("\t\t\t"));
+
+			if (data.parentStats.length > 1)
+				_.each(data.parentStats, (p) =>
+				{
+					if (p.totalTime > data.totalTime * 0.2)
+						lines.push(
+						[
+							p.calls,
+							"",
+							p.totalTime.toFixed(1),
+							p.averageTime.toFixed(5),
+							p.name,
+						].join("\t\t\t"));
+				});
+		});
+		return lines;
+	}
+
+	private header(): string
+	{
+		return ["calls", "%", "total", "average", "name"].join("\t\t\t");
+	}
+
+	public report(displayResults = 10): string
 	{
 		const elapsedTicks = Game.time - this.m.started + 1;
-		
-		const grandTotal = _.sum(this.m.cpu, (e) => e.total);
-		const lines = _.map(this.m.cpu, (entry, label) => `\t${label}: average ${(entry.total / entry.times).toFixed(3)}, total ${entry.total.toFixed(3)}, calls: ${entry.times}, share: ${(100 * entry.total / grandTotal).toFixed(3)}%`);
-		return `${this.constructor.name}:\n${lines.join("\n")}`;
+		const header = this.header();
+		const stats = this.stats(this.m.cpu);
+		const footer =
+		[
+			`Avg: ${(this.m.totalTime / elapsedTicks).toFixed(2)}`,
+			`Total: ${this.m.totalTime.toFixed(2)}`,
+			`Ticks: ${elapsedTicks}`,
+		].join("\t");
+		return ([] as string[]).concat(header, this.lines(stats).slice(0, displayResults), footer).join("\n");
 	}
 
 	private record(parent: string | undefined, label: string, time: number)
@@ -35,7 +111,7 @@ export abstract class TestProfiler
 		{
 			this.m.cpu[label] =
 			{
-				total: time,
+				totalTime: time,
 				calls: 0,
 				parentMap: {},
 			};
@@ -43,7 +119,7 @@ export abstract class TestProfiler
 
 		const stat = this.m.cpu[label];
 		stat.calls++;
-		stat.total += time;
+		stat.totalTime += time;
 
 		if (!parent)
 			return;
@@ -54,14 +130,14 @@ export abstract class TestProfiler
 		{
 			stat.parentMap[parentString] =
 			{
-				total: time,
+				totalTime: time,
 				calls: 0,
 			};
 		}
 
 		const parentStat = stat.parentMap[parentString];
 		parentStat.calls++;
-		parentStat.total += time;
+		parentStat.totalTime += time;
 	}
 
 	protected wrapFunction(originalFunction: Function, label: string)

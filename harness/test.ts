@@ -13,6 +13,7 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 				p: {},
 				cpu: {},
 				started: Game.time,
+				totalTime: 0,
 			};
 	}
 
