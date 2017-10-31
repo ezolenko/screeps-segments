@@ -86,7 +86,7 @@ export abstract class TestProfiler
 
 	private header(): string
 	{
-		return ["calls", "%", "total", "average", "name"].join("\t\t\t");
+		return `${this.constructor.name}:\n${["calls", "%", "total", "average", "name"].join("\t\t\t")}`;
 	}
 
 	public report(displayResults = 10): string
