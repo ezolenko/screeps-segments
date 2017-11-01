@@ -37,12 +37,11 @@ interface IScreepsTestProfilerMemory
 interface IScreepsTestMemory extends IScreepsTestProfilerMemory
 {
     p: any;
-    timers?: { [id: string]: number | undefined; };
-	runOnce?: 1;
-    runSeq?: number;
-    runSeqRepeat?: number;
-	runAll?: Array<0 | 1>;
-    runAllDone?: 1;
+    timers: { [id: string]: number | undefined; };
+	runOnce: { [id: string]: 1 };
+    runSeq: { [id: string]: { index: number, repeat: number } };
+    runAll: { [id: string]: { all: Array<0 | 1>, done?: 1 } };
+    asserts: { [line: string]: { s: number, f: number } };
 }
 
 interface ITestHarnessMemory
@@ -61,7 +60,7 @@ interface IScreepsTest
     run(): boolean;
     afterTick(): void;
     cleanup(): void;
-	report(): string;
+    report(): string;
 }
 
 interface Global

@@ -39,7 +39,7 @@ class TestRunner extends ScreepsTest<ITestRunnerMemory>
 			return;
 		}
 
-		logger.error(`running ${this.current.constructor.name}, ${this.memory.current}`);
+		logger.error(`running ${this.current.constructor.name}, test ${this.memory.current + 1} of ${global.testRegistry.length}`);
 
 		this.test = new this.current.constructor();
 
@@ -65,10 +65,16 @@ class TestRunner extends ScreepsTest<ITestRunnerMemory>
 
 		if (this.currentDone)
 		{
-			logger.error(`completed ${this.current.constructor.name}`);
+			logger.error(`completed: ${this.current.constructor.name}`);
 
 			this.memory.reports.push(this.test.report());
+
+			logger.error(`report generated: ${this.current.constructor.name}`);
+
 			this.test.cleanup();
+
+			logger.error(`cleaned up: ${this.current.constructor.name}`);
+
 			this.memory.current++;
 		}
 	}
