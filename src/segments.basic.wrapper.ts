@@ -116,6 +116,8 @@ export class SegmentsBasicWrapper
 
 	public visualize(sx: number, sy: number, scale: number)
 	{
+		const xscale = 0.5 * scale;
+		const yscale = 1 * scale;
 		const visual = new RoomVisual();
 
 		const segmentIdStyle: TextStyle = {};
@@ -131,26 +133,26 @@ export class SegmentsBasicWrapper
 			for (let column = 0; column < 20; column++)
 			{
 				const id = 20 * row + column;
-				const x = sx + column * scale;
-				const y = sy + row * scale;
+				const x = sx + column * xscale;
+				const y = sy + row * yscale;
 
-				visual.rect(x, y, 1 * scale, 1 * scale, cellStyle);
+				visual.rect(x, y, 1 * xscale, 1 * yscale, cellStyle);
 
 				if (this.read.has(id))
-					visual.rect(x, y, 1 * scale, 0.3 * scale, read);
+					visual.rect(x, y, 1 * xscale, 0.3 * yscale, read);
 
 				if (this.willWrite.has(id))
-					visual.rect(x, y + 0.7 * scale, 0.5 * scale, 0.3 * scale, written);
+					visual.rect(x, y + 0.7 * yscale, 0.5 * xscale, 0.3 * yscale, written);
 				if (this.willRead.has(id))
-					visual.rect(x + 0.5 * scale, y + 0.7 * scale, 0.5 * scale, 0.3 * scale, read);
+					visual.rect(x + 0.5 * xscale, y + 0.7 * yscale, 0.5 * xscale, 0.3 * xscale, read);
 
 				if (this.readRequested.has(id))
-					visual.circle(x + 0.3, y + 0.5 * scale, readRequested);
+					visual.circle(x + 0.3, y + 0.5 * yscale, readRequested);
 
 				if (this.writeRequested.has(id))
-					visual.circle(x + 0.3, y + 0.5 * scale, writeRequested);
+					visual.circle(x + 0.3, y + 0.5 * yscale, writeRequested);
 
-				visual.text(`${id}`, x + 0.5 * scale, y + 0.5 * scale, segmentIdStyle);
+				visual.text(`${id}`, x + 0.5 * xscale, y + 0.5 * yscale, segmentIdStyle);
 			}
 	}
 }

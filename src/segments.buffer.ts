@@ -258,6 +258,11 @@ export class SegmentBuffer
 		delete this.memory.buffer[id];
 		delete this.memory.metadata[id];
 	}
+
+	public visualize(sx: number, sy: number, scale: number)
+	{
+		this.s.visualize(sx, sy, scale);
+	}
 }
 
 /*

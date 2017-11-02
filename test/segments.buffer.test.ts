@@ -23,6 +23,7 @@ export class SegmentsBufferTest extends ScreepsTest<{}>
 
 	public afterTick()
 	{
+		this.buffer.visualize(0, 0, 3);
 		this.buffer.afterTick();
 
 		super.afterTick();
