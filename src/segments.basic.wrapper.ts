@@ -1,3 +1,5 @@
+import { Circle, Grid, Rect, Text } from './segment.visualizer';
+
 export class SegmentsBasicWrapper
 {
 	private readRequested: Set<number>;
@@ -116,43 +118,62 @@ export class SegmentsBasicWrapper
 
 	public visualize(sx: number, sy: number, scale: number)
 	{
-		const xscale = 0.5 * scale;
-		const yscale = 1 * scale;
-		const visual = new RoomVisual();
-
-		const segmentIdStyle: TextStyle = {};
+		const states =
+		{
+			readRequested:
+			{
+				cell: () => new Circle({ fill: "blue" }),
+				index: 0,
+			},
+			willRead:
+			{
+				cell: () => new Rect({ fill: "blue" }),
+				index: 0 + 3,
+			},
+			writeRequested:
+			{
+				cell: () => new Circle({ fill: "green"}),
+				index: 2,
+			},
+			willWrite:
+			{
+				cell: () => new Rect({ fill: "green" }),
+				index: 2 + 3,
+			},
+			available:
+			{
+				cell: () => new Rect({ fill: "yellow" }),
+				index: 8,
+			},
+		};
 
 		const cellStyle: PolyStyle = { fill: "white", stroke: "gray", strokeWidth: 0.1 };
-		const read: PolyStyle = { fill: "blue", stroke: "blue", strokeWidth: 0.1 };
-		const written: PolyStyle = { fill: "green", stroke: "green", strokeWidth: 0.1 };
 
-		const readRequested: CircleStyle = { radius: 0.1 * scale, fill: "blue" };
-		const writeRequested: CircleStyle = { radius: 0.1 * scale, fill: "green" };
+		const grid = new Grid({ columns: 20, rows: 5 });
 
-		for (let row = 0; row < 5; row++)
-			for (let column = 0; column < 20; column++)
-			{
-				const id = 20 * row + column;
-				const x = sx + column * xscale;
-				const y = sy + row * yscale;
+		for (let id = 0; id < 100; id++)
+		{
+			const cell = new Grid({ columns: 3, rows: 4, backgroundStyle: cellStyle });
 
-				visual.rect(x, y, 1 * xscale, 1 * yscale, cellStyle);
+			cell.setCellByIndex(4, new Text(`${id}`, {}));
 
-				if (this.read.has(id))
-					visual.rect(x, y, 1 * xscale, 0.3 * yscale, read);
+			if (this.read.has(id))
+				cell.setCellByIndex(states.available.index, states.available.cell());
 
-				if (this.willWrite.has(id))
-					visual.rect(x, y + 0.7 * yscale, 0.5 * xscale, 0.3 * yscale, written);
-				if (this.willRead.has(id))
-					visual.rect(x + 0.5 * xscale, y + 0.7 * yscale, 0.5 * xscale, 0.3 * xscale, read);
+			if (this.willWrite.has(id))
+				cell.setCellByIndex(states.willWrite.index, states.willWrite.cell());
+			if (this.willRead.has(id))
+				cell.setCellByIndex(states.willRead.index, states.willRead.cell());
+			if (this.readRequested.has(id))
+				cell.setCellByIndex(states.readRequested.index, states.readRequested.cell());
+			if (this.writeRequested.has(id))
+				cell.setCellByIndex(states.writeRequested.index, states.writeRequested.cell());
 
-				if (this.readRequested.has(id))
-					visual.circle(x + 0.3, y + 0.5 * yscale, readRequested);
+			grid.setCellByIndex(id, cell);
+		}
 
-				if (this.writeRequested.has(id))
-					visual.circle(x + 0.3, y + 0.5 * yscale, writeRequested);
+		grid.box = { x: () => sx - 0.5, y: () => sy - 0.5, w: () => 50, h: () => grid.rows * scale };
 
-				visual.text(`${id}`, x + 0.5 * xscale, y + 0.5 * yscale, segmentIdStyle);
-			}
+		grid.draw(new RoomVisual());
 	}
 }
