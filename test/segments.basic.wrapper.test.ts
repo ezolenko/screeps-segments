@@ -1,4 +1,4 @@
-import { SegmentsBasicWrapper } from "../src/segments.basic.wrapper";
+import { SegmentsBasicWrapper } from "../lib/lib";
 import { logger } from "../harness/logger";
 import { ScreepsTest } from "../harness/test";
 import { TestDefinition } from "../harness/runner";
@@ -26,7 +26,7 @@ export class SegmentsBasicWrapperTest extends ScreepsTest<ISegmentsBasicWrapperT
 
 	public afterTick()
 	{
-		this.wrapper.visualize(0, 0, 3);
+		this.wrapper.visualize(3);
 		this.wrapper.afterTick();
 
 		super.afterTick();
@@ -34,7 +34,7 @@ export class SegmentsBasicWrapperTest extends ScreepsTest<ISegmentsBasicWrapperT
 
 	public run(): boolean
 	{
-		return this.runSequence(2,
+		return this.runSequence(1,
 		[
 			(iteration) => { logger.error(`iteration: ${iteration}`); return true; },
 			() => this.fillAllSegments(),

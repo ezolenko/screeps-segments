@@ -1,4 +1,4 @@
-import { ScreepsTest } from "./test";
+import { ScreepsTest, IScreepsTest } from "./test";
 import { logger } from "../harness/logger";
 
 interface ITestRunnerMemory
@@ -6,6 +6,17 @@ interface ITestRunnerMemory
 	current: number;
 	reports: string[];
 }
+
+declare global
+{
+	interface Global
+	{
+		testRegistry: Array<{ constructor: new () => IScreepsTest, order: number }>;
+		restartTest(): void;
+	}
+}
+
+declare var global: Global;
 
 let testRegistrySorted = false;
 

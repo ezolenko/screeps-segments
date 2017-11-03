@@ -1,3 +1,31 @@
+export interface ITestProfilerBasicStat
+{
+	totalTime: number;
+	calls: number;
+}
+
+export interface ITestProfilerParentMap
+{
+	[parentName: string]: ITestProfilerBasicStat;
+}
+
+export interface ITestProfilerFunctionRecord extends ITestProfilerBasicStat
+{
+	parentMap: ITestProfilerParentMap;
+}
+
+export interface ITestProfilerProfilerMap
+{
+	[functionName: string]: ITestProfilerFunctionRecord;
+}
+
+export interface IScreepsTestProfilerMemory
+{
+	started: number;
+	totalTime: number;
+	cpu: ITestProfilerProfilerMap;
+}
+
 interface IParentStat
 {
 	name: string;
@@ -93,6 +121,7 @@ export abstract class TestProfiler
 	{
 		const elapsedTicks = Game.time - this.m.started + 1;
 		const header = this.header();
+
 		const stats = this.stats(this.m.cpu);
 		const footer =
 		[

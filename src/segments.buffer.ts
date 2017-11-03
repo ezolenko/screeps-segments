@@ -1,4 +1,50 @@
 import { SegmentsBasicWrapper } from "./segments.basic.wrapper";
+import { Grid, Circle, Text } from "./segment.visualizer";
+import { ILogger } from "./ilogger";
+
+export interface ISegmentMetadata
+{
+	cacheMiss: number;
+
+	savedVersion: number;
+
+	lastWrite: number;
+	lastRead: number;
+	lastReadRequest: number;
+	lastWriteRequest: number;
+
+	writeCount: number;
+	readCount: number;
+	readRequestCount: number;
+	writeRequestCount: number;
+	setCount: number;
+	getCount: number;
+
+	locked?: 1;
+	lockedCount: number;
+}
+
+export interface ISegmentsBufferEntry
+{
+	d: string;
+	version: number;
+	lastRead: number;
+}
+
+export interface ISegmentBuffer
+{
+	version: number;
+	metadata: { [id: string]: ISegmentMetadata };
+	buffer: { [id: string]: ISegmentsBufferEntry };
+}
+
+declare global
+{
+	interface Memory
+	{
+		segments: ISegmentBuffer;
+	}
+}
 
 export interface ISegmentsCacheEntry
 {
@@ -259,9 +305,74 @@ export class SegmentBuffer
 		delete this.memory.metadata[id];
 	}
 
-	public visualize(sx: number, sy: number, scale: number)
+	public visualize(scale: number)
 	{
-		this.s.visualize(sx, sy, scale);
+		const states =
+		{
+			inCache:
+			{
+				cell: () => new Circle({ fill: "blue" }),
+				pos: { column: 2, row: 2 },
+			},
+			inBuffer:
+			{
+				cell: () => new Circle({ fill: "red" }),
+				pos: { column: 1, row: 2 },
+			},
+
+			savedVersion:
+			{
+				cell: (text: string) => new Text(text, { color: "green" }),
+				pos: { column: 0, row: 3 },
+			},
+			inBufferVersion:
+			{
+				cell: (text: string) => new Text(text, { color: "red" }),
+				pos: { column: 1, row: 3 },
+			},
+			inCacheVersion:
+			{
+				cell: (text: string) => new Text(text, { color: "blue" }),
+				pos: { column: 2, row: 3 },
+			},
+
+			cacheMiss:
+			{
+				cell: (text: string) => new Text(text, { color: "red" }),
+				pos: { column: 2, row: 4 },
+			},
+		};
+
+		const grid = this.s.makeGrid({ columns: 3, rows: 5 });
+
+		for (let id = 0; id < 100; id++)
+		{
+			const cell = grid.getCellByIndex(id) as Grid;
+
+			const cache = this.cache[id];
+			if (cache !== undefined)
+			{
+				cell.setCell(states.inCache.pos, states.inCache.cell());
+				cell.setCell(states.inCacheVersion.pos, states.inCacheVersion.cell(`${cache.version}`));
+			}
+
+			const buffer = this.memory.buffer[id];
+			if (buffer !== undefined)
+			{
+				cell.setCell(states.inBuffer.pos, states.inBuffer.cell());
+				cell.setCell(states.inBufferVersion.pos, states.inBufferVersion.cell(`${buffer.version}`));
+			}
+
+			const md = this.memory.metadata[id];
+			if (md !== undefined)
+			{
+				cell.setCell(states.savedVersion.pos, states.savedVersion.cell(`${md.savedVersion}`));
+				cell.setCell(states.cacheMiss.pos, states.cacheMiss.cell(`${md.cacheMiss}`));
+			}
+		}
+
+		grid.box = { x: () => - 0.5, y: () => - 0.5, w: () => 50, h: () => grid.rows * 2 * scale };
+		grid.draw(new RoomVisual());
 	}
 }
 

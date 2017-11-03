@@ -1,3 +1,5 @@
+import { ILogger } from "../src/ilogger";
+
 class Logger implements ILogger
 {
 	public error(message: string)

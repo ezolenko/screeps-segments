@@ -1,4 +1,37 @@
-import { TestProfiler } from "./profiler";
+import { IScreepsTestProfilerMemory, TestProfiler } from "./profiler";
+import { logger } from "./logger";
+
+export interface IScreepsTestMemory extends IScreepsTestProfilerMemory
+{
+	p: any;
+	timers: { [id: string]: number | undefined; };
+	runOnce: { [id: string]: 1 };
+	runSeq: { [id: string]: { index: number, repeat: number } };
+	runAll: { [id: string]: { all: Array<0 | 1>, done?: 1 } };
+	asserts: { [line: string]: { s: number, f: number } };
+}
+
+export interface ITestHarnessMemory
+{
+	suites: { [id: string]: IScreepsTestMemory };
+}
+
+export interface IScreepsTest
+{
+	beforeTick(): void;
+	run(): boolean;
+	afterTick(): void;
+	cleanup(): void;
+	report(): string;
+}
+
+declare global
+{
+	interface Memory
+	{
+		__test_harness: ITestHarnessMemory;
+	}
+}
 
 export abstract class ScreepsTest<M extends {}> extends TestProfiler implements IScreepsTest
 {
@@ -8,6 +41,8 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 		if (Memory.__test_harness === undefined)
 			Memory.__test_harness = { suites: { } };
 		if (Memory.__test_harness.suites[this.constructor.name] === undefined)
+		{
+			logger.error(`creating Memory.__test_harness.suites[${this.constructor.name}]`);
 			Memory.__test_harness.suites[this.constructor.name] =
 			{
 				p: {},
@@ -20,6 +55,7 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 				runAll: {},
 				asserts: {},
 			};
+		}
 	}
 
 	public abstract run(): boolean;

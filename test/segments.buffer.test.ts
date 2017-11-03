@@ -1,6 +1,6 @@
 import { TestDefinition } from "../harness/runner";
 import { ScreepsTest } from "../harness/test";
-import { SegmentBuffer, eSegmentBufferStatus } from "../src/segments.buffer";
+import { SegmentBuffer, eSegmentBufferStatus } from "../lib/lib";;
 import { logger } from "../harness/logger";
 
 // export interface ISegmentsBufferTestMemory
@@ -23,7 +23,7 @@ export class SegmentsBufferTest extends ScreepsTest<{}>
 
 	public afterTick()
 	{
-		this.buffer.visualize(0, 0, 3);
+		this.buffer.visualize(3);
 		this.buffer.afterTick();
 
 		super.afterTick();

@@ -106,6 +106,16 @@ export class Grid implements ICell
 		return this;
 	}
 
+	public getCell(pos: { column: number, row: number }): ICell
+	{
+		return _.get(this.cells, [pos.column, pos.row]);
+	}
+
+	public getCellByIndex(index: number)
+	{
+		return this.getCell(this.convert(index));
+	}
+
 	public draw(visual: RoomVisual)
 	{
 		if (this.opts.backgroundStyle !== undefined)

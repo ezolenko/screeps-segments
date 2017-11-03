@@ -1,4 +1,5 @@
-import { Circle, Grid, Rect, Text } from './segment.visualizer';
+import { Circle, Grid, Rect, Text } from "./segment.visualizer";
+import { ILogger } from "./ilogger";
 
 export class SegmentsBasicWrapper
 {
@@ -116,64 +117,69 @@ export class SegmentsBasicWrapper
 		return true;
 	}
 
-	public visualize(sx: number, sy: number, scale: number)
+	public makeGrid(cellSize = { columns: 3, rows: 2 }): Grid
 	{
 		const states =
 		{
 			readRequested:
 			{
-				cell: () => new Circle({ fill: "blue" }),
-				index: 0,
+				cell: () => new Circle({ fill: "blue", stroke: "black", strokeWidth: 0.1 }),
+				pos: { column: 0, row: 0 },
 			},
 			willRead:
 			{
-				cell: () => new Rect({ fill: "blue" }),
-				index: 0 + 3,
+				cell: () => new Rect({ fill: "blue", stroke: "black", strokeWidth: 0.1 }),
+				pos: { column: 0, row: 1 },
 			},
 			writeRequested:
 			{
-				cell: () => new Circle({ fill: "green"}),
-				index: 2,
+				cell: () => new Circle({ fill: "green", stroke: "black", strokeWidth: 0.1 }),
+				pos: { column: 2, row: 0 },
 			},
 			willWrite:
 			{
-				cell: () => new Rect({ fill: "green" }),
-				index: 2 + 3,
+				cell: () => new Rect({ fill: "green", stroke: "black", strokeWidth: 0.1 }),
+				pos: { column: 2, row: 1 },
 			},
 			available:
 			{
-				cell: () => new Rect({ fill: "yellow" }),
-				index: 8,
+				cell: () => new Rect({ fill: "yellow", stroke: "black", strokeWidth: 0.1 }),
+				pos: { column: 1, row: 0 },
 			},
 		};
 
-		const cellStyle: PolyStyle = { fill: "white", stroke: "gray", strokeWidth: 0.1 };
-
 		const grid = new Grid({ columns: 20, rows: 5 });
+
+		const cellOptions = { ... cellSize, backgroundStyle: { fill: "gray", stroke: "black", strokeWidth: 0.1, opacity: 1 } };
 
 		for (let id = 0; id < 100; id++)
 		{
-			const cell = new Grid({ columns: 3, rows: 4, backgroundStyle: cellStyle });
+			const cell = new Grid(cellOptions);
 
-			cell.setCellByIndex(4, new Text(`${id}`, {}));
+			cell.setCell({ column: 1, row: 1 }, new Text(`${id}`, {}));
 
 			if (this.read.has(id))
-				cell.setCellByIndex(states.available.index, states.available.cell());
+				cell.setCell(states.available.pos, states.available.cell());
 
 			if (this.willWrite.has(id))
-				cell.setCellByIndex(states.willWrite.index, states.willWrite.cell());
+				cell.setCell(states.willWrite.pos, states.willWrite.cell());
 			if (this.willRead.has(id))
-				cell.setCellByIndex(states.willRead.index, states.willRead.cell());
+				cell.setCell(states.willRead.pos, states.willRead.cell());
 			if (this.readRequested.has(id))
-				cell.setCellByIndex(states.readRequested.index, states.readRequested.cell());
+				cell.setCell(states.readRequested.pos, states.readRequested.cell());
 			if (this.writeRequested.has(id))
-				cell.setCellByIndex(states.writeRequested.index, states.writeRequested.cell());
+				cell.setCell(states.writeRequested.pos, states.writeRequested.cell());
 
 			grid.setCellByIndex(id, cell);
 		}
 
-		grid.box = { x: () => sx - 0.5, y: () => sy - 0.5, w: () => 50, h: () => grid.rows * scale };
+		return grid;
+	}
 
+	public visualize(scale: number)
+	{
+		const grid = this.makeGrid();
+		grid.box = { x: () => - 0.5, y: () => - 0.5, w: () => 50, h: () => grid.rows * scale };
 		grid.draw(new RoomVisual());
 	}
 }
