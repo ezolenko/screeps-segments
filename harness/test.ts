@@ -141,8 +141,11 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 
 		const entry = this.m.runSeq[id];
 
-		if (entry.index < cb.length && cb[entry.index ](entry.repeat))
-			entry.index  += 1;
+		if (entry.repeat >= times)
+			return true;
+
+		if (entry.index < cb.length && cb[entry.index](entry.repeat))
+			entry.index += 1;
 
 		if (entry.index >= cb.length)
 		{

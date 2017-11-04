@@ -53,7 +53,7 @@ export interface ISegmentsCacheEntry
 	version: number;
 }
 
-interface ISegmentsCache
+export interface ISegmentsCache
 {
 	[id: string]: ISegmentsCacheEntry;
 }
@@ -77,6 +77,14 @@ export class SegmentBuffer
 	constructor(private log: ILogger)
 	{
 		this.s = new SegmentsBasicWrapper(this.log);
+	}
+
+	public get __test()
+	{
+		return {
+			memory: this.memory,
+			cache: this.cache,
+		};
 	}
 
 	public beforeTick()
