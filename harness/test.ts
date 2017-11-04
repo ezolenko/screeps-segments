@@ -74,17 +74,19 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 
 	public beforeTick()
 	{
+		super.beforeTick();
 		this.intents.clear();
 	}
 
 	public afterTick()
 	{
 		this.intents.forEach((i) => i());
+		super.afterTick();
 	}
 
 	public cleanup()
 	{
-		super.cleanup();
+		this.cleanupProfiler();
 		delete Memory.__test_harness.suites[this.constructor.name];
 	}
 
@@ -188,7 +190,7 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 		{
 			const lines = stack.split("\n");
 			if (lines.length > upStack + 2)
-				return lines[upStack + 2];
+				return _.trim(lines[upStack + 2]);
 			else
 				throw new Error(`can't get line ${upStack} in stack:\n${stack}`);
 		}

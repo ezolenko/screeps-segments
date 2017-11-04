@@ -7,7 +7,7 @@ import { logger } from "../harness/logger";
 // {
 // }
 
-@TestDefinition(0)
+@TestDefinition(1)
 export class SegmentsBufferTest extends ScreepsTest<{}>
 {
 	private buffer = new SegmentBuffer(logger);
@@ -33,18 +33,17 @@ export class SegmentsBufferTest extends ScreepsTest<{}>
 	{
 		return this.runSequence(3,
 		[
-			() => this.oneTickAssingment(),
+			() => this.oneTickAssignment(),
 		]);
 	}
 
-	private oneTickAssingment(): boolean
+	private oneTickAssignment(): boolean
 	{
-
 		return this.runSequence(10,
 		[
 			(iteration) =>
 			{
-				logger.error(`oneTickAssingment iteration: ${iteration}`);
+				logger.error(`oneTickAssignment iteration: ${iteration}`);
 
 				const id = 13;
 				const data = `${id}${iteration}`;
@@ -75,8 +74,13 @@ export class SegmentsBufferTest extends ScreepsTest<{}>
 
 				this.assert(this.buffer["memory"].version === this.buffer["version"]);
 				this.assert(this.buffer["memory"].metadata[id] === this.buffer["cache"][id].metadata);
-				this.assert(this.buffer["memory"].buffer[id] !== undefined);
-				this.assert(this.buffer["memory"].buffer[id].version === iteration);
+
+				const buffer = this.buffer["memory"].buffer[id];
+				this.assert(buffer !== undefined);
+				if (buffer !== undefined)
+				{
+					this.assert(buffer.version === iteration);
+				}
 
 				return true;
 			},

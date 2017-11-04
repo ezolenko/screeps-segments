@@ -22,7 +22,6 @@ export interface ITestProfilerProfilerMap
 export interface IScreepsTestProfilerMemory
 {
 	started: number;
-	totalTime: number;
 	cpu: ITestProfilerProfilerMap;
 }
 
@@ -45,6 +44,7 @@ interface IProfilerStats
 
 export abstract class TestProfiler
 {
+	private profiling = true;
 	private currentlyExecuting: string;
 	private usedElsewhere: number = 0;
 
@@ -52,8 +52,19 @@ export abstract class TestProfiler
 
 	protected abstract get m(): IScreepsTestProfilerMemory;
 
-	public cleanup()
+	public beforeTick(): void
 	{
+		this.profiling = true;
+	}
+
+	public afterTick(): void
+	{
+		this.profiling = false;
+	}
+
+	protected cleanupProfiler()
+	{
+		this.profiling = false;
 		this.onCleanup.forEach((c) => c());
 		this.onCleanup = [];
 	}
@@ -82,6 +93,7 @@ export abstract class TestProfiler
 
 	private lines(stats: IProfilerStats[]): string[]
 	{
+		const totalTime = _.sum(stats, (e) => e.totalTime);
 		const lines: string[] = [];
 
 		_.each(stats, (data) =>
@@ -89,7 +101,7 @@ export abstract class TestProfiler
 			lines.push(
 			[
 				data.calls,
-				(100 * data.totalTime / this.m.totalTime).toFixed(2),
+				(100 * data.totalTime / totalTime).toFixed(2),
 				data.totalTime.toFixed(1),
 				data.averageTime.toFixed(5),
 				data.name,
@@ -125,8 +137,6 @@ export abstract class TestProfiler
 		const stats = this.stats(this.m.cpu);
 		const footer =
 		[
-			`Avg: ${(this.m.totalTime / elapsedTicks).toFixed(2)}`,
-			`Total: ${this.m.totalTime.toFixed(2)}`,
 			`Ticks: ${elapsedTicks}`,
 		].join("\t");
 		return ([] as string[]).concat(header, this.lines(stats).slice(0, displayResults), footer).join("\n");
@@ -140,7 +150,7 @@ export abstract class TestProfiler
 		{
 			this.m.cpu[label] =
 			{
-				totalTime: time,
+				totalTime: 0,
 				calls: 0,
 				parentMap: {},
 			};
@@ -159,7 +169,7 @@ export abstract class TestProfiler
 		{
 			stat.parentMap[parentString] =
 			{
-				totalTime: time,
+				totalTime: 0,
 				calls: 0,
 			};
 		}
@@ -174,6 +184,9 @@ export abstract class TestProfiler
 		const profiler = this;
 		return function(this: any)
 		{
+			if (!profiler.profiling)
+				return originalFunction.apply(this, arguments);
+
 			const start = Game.cpu.getUsed();
 			const usedElsewhereStart = profiler.usedElsewhere;
 

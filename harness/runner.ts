@@ -44,6 +44,8 @@ class TestRunner extends ScreepsTest<ITestRunnerMemory>
 
 	public beforeTick()
 	{
+		super.beforeTick();
+
 		if (this.allDone)
 		{
 			logger.error(`all done`);
@@ -69,25 +71,27 @@ class TestRunner extends ScreepsTest<ITestRunnerMemory>
 
 	public afterTick()
 	{
-		if (this.allDone)
-			return;
-
-		this.test.afterTick();
-
-		if (this.currentDone)
+		if (!this.allDone)
 		{
-			logger.error(`completed: ${this.current.constructor.name}`);
+			this.test.afterTick();
 
-			this.memory.reports.push(this.test.report());
+			if (this.currentDone)
+			{
+				logger.error(`completed: ${this.current.constructor.name}`);
 
-			logger.error(`report generated: ${this.current.constructor.name}`);
+				this.memory.reports.push(this.test.report());
+				logger.error(`report generated: ${this.current.constructor.name}`);
 
-			this.test.cleanup();
+				this.test.cleanup();
+				logger.error(`cleaned up: ${this.current.constructor.name}`);
 
-			logger.error(`cleaned up: ${this.current.constructor.name}`);
+				this.memory.current++;
+			}
 
-			this.memory.current++;
+			delete this.test;
 		}
+
+		super.afterTick();
 	}
 
 	public report()
