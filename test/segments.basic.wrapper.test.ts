@@ -2,6 +2,7 @@ import { SegmentsBasicWrapper } from "../lib/lib";
 import { logger } from "../harness/logger";
 import { ScreepsTest } from "../harness/test";
 import { TestDefinition } from "../harness/runner";
+import { SourceMapWrapper } from "../harness/sourcemap";
 
 export interface ISegmentsBasicWrapperTestMemory
 {
@@ -10,10 +11,15 @@ export interface ISegmentsBasicWrapperTestMemory
 	checked?: { [id: number]: boolean };
 }
 
-@TestDefinition(0)
+@TestDefinition(1)
 export class SegmentsBasicWrapperTest extends ScreepsTest<ISegmentsBasicWrapperTestMemory>
 {
 	private wrapper = new SegmentsBasicWrapper(logger);
+
+	constructor(sourceMap: SourceMapWrapper)
+	{
+		super(sourceMap);
+	}
 
 	public beforeTick()
 	{

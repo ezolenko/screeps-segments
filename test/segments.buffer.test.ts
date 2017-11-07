@@ -7,7 +7,7 @@ import { logger } from "../harness/logger";
 // {
 // }
 
-@TestDefinition(1)
+@TestDefinition(0)
 export class SegmentsBufferTest extends ScreepsTest<{}>
 {
 	private buffer = new SegmentBuffer(logger);

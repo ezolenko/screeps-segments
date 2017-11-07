@@ -157,6 +157,7 @@ export abstract class TestProfiler
 		}
 
 		const stat = this.m.cpu[label];
+
 		stat.calls++;
 		stat.totalTime += time;
 
@@ -211,7 +212,10 @@ export abstract class TestProfiler
 		const objectToWrap = object.__proto__ ? object.__proto__ : object.prototype ? object.prototype : object;
 
 		if (objectToWrap.__profilerWrapped)
+		{
+			console.log(`profiler already wrapped for: ${label}, ${Object.getOwnPropertyNames(objectToWrap)}`);
 			return objectToWrap;
+		}
 
 		Object.getOwnPropertyNames(objectToWrap).forEach((functionName) =>
 		{

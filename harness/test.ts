@@ -1,5 +1,6 @@
 import { IScreepsTestProfilerMemory, TestProfiler } from "./profiler";
 import { logger } from "./logger";
+import { SourceMapWrapper } from "./sourcemap";
 
 export interface IScreepsTestMemory extends IScreepsTestProfilerMemory
 {
@@ -8,7 +9,7 @@ export interface IScreepsTestMemory extends IScreepsTestProfilerMemory
 	runOnce: { [id: string]: 1 };
 	runSeq: { [id: string]: { index: number, repeat: number } };
 	runAll: { [id: string]: { all: Array<0 | 1>, done?: 1 } };
-	asserts: { [line: string]: { s: number, f: number } };
+	asserts: { [line: string]: { s: number, f: number, l: string, c?: string } };
 }
 
 export interface ITestHarnessMemory
@@ -35,7 +36,7 @@ declare global
 
 export abstract class ScreepsTest<M extends {}> extends TestProfiler implements IScreepsTest
 {
-	constructor()
+	constructor(protected sourceMap: SourceMapWrapper)
 	{
 		super();
 		if (Memory.__test_harness === undefined)
@@ -91,7 +92,7 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 
 	protected timer(opts: { fireFirst?: boolean; interval: (() => number) | number }, cb: () => boolean): boolean
 	{
-		const id = this.getFileLine(1);
+		const id = this.sourceMap.getFileLine(1, false).final;
 
 		let shouldReset;
 		let finished;
@@ -125,7 +126,7 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 
 	protected runOnce(cb: () => boolean): boolean
 	{
-		const id = this.getFileLine(1);
+		const id = this.sourceMap.getFileLine(1, false).final;
 
 		if (this.m.runOnce[id] !== 1 && cb())
 			this.m.runOnce[id] = 1;
@@ -135,7 +136,7 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 
 	protected runSequence(times: number, cb: Array<(iteration: number) => boolean>): boolean
 	{
-		const id = this.getFileLine(1);
+		const id = this.sourceMap.getFileLine(1, false).final;
 
 		if (this.m.runSeq[id] === undefined)
 			this.m.runSeq[id] = { index: 0, repeat: 0 };
@@ -159,7 +160,7 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 
 	protected runAll(cbs: Array<() => boolean>): boolean
 	{
-		const id = this.getFileLine(1);
+		const id = this.sourceMap.getFileLine(1, false).final;
 
 		if (this.m.runAll[id] === undefined)
 			this.m.runAll[id] = { all: [] };
@@ -182,30 +183,16 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 		return entry.done === 1;
 	}
 
-	private getFileLine(upStack: number): string
-	{
-		const stack = new Error("").stack;
-		if (stack !== undefined)
-		{
-			const lines = stack.split("\n");
-			if (lines.length > upStack + 2)
-				return _.trim(lines[upStack + 2]);
-			else
-				throw new Error(`can't get line ${upStack} in stack:\n${stack}`);
-		}
-		else throw new Error(`can't get call stack`);
-	}
-
 	protected assert(expression: boolean, comment?: string): void
 	{
-		let line = this.getFileLine(1);
-		if (comment !== undefined)
-			line = `${comment} (${line})`;
+		const pos = this.sourceMap.getFileLine(1, true);
 
-		if (this.m.asserts[line] === undefined)
-			this.m.asserts[line] = { s: 0, f: 0 };
+		const id = comment !== undefined ? `${comment} (${pos.final})` : pos.final;
 
-		const entry = this.m.asserts[line];
+		if (this.m.asserts[id] === undefined)
+			this.m.asserts[id] = { s: 0, f: 0, l: this.sourceMap.makeVscLink(pos), c: pos.code };
+
+		const entry = this.m.asserts[id];
 
 		if (expression)
 			entry.s++;
@@ -215,10 +202,10 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 
 	public report()
 	{
-		const asserts = _.map(this.m.asserts, (entry, key) => `${key}: succeeded: ${entry.s}, failed: ${entry.f}`);
+		const asserts = _.map(this.m.asserts, (entry) => `${entry.c} // ${entry.l}\n\tsucceeded: ${entry.s}, failed: ${entry.f}`);
 
 		const profiler = super.report();
 
-		return `${this.constructor.name}:\n${asserts.join("\n")}\n${profiler}\n=============================`;
+		return `${this.constructor.name}:\n${asserts.join("\n")}\n${profiler}\n=============================\n`;
 	}
 }

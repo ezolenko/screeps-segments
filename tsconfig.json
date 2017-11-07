@@ -9,7 +9,7 @@
       "strictNullChecks": true,
       "noUnusedParameters": true,
       "noUnusedLocals": true,
-      "sourceMap": false,
+      "sourceMap": true,
       "noImplicitThis": true,
       "diagnostics": true,
       "listFiles": true,

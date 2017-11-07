@@ -1,5 +1,6 @@
 import { ScreepsTest, IScreepsTest } from "./test";
 import { logger } from "../harness/logger";
+import { SourceMapWrapper } from "./sourcemap";
 
 interface ITestRunnerMemory
 {
@@ -11,7 +12,7 @@ declare global
 {
 	interface Global
 	{
-		testRegistry: Array<{ constructor: new () => IScreepsTest, order: number }>;
+		testRegistry: Array<{ constructor: new (sourceMap: SourceMapWrapper) => IScreepsTest, order: number }>;
 		restartTest(): void;
 	}
 }
@@ -28,9 +29,9 @@ class TestRunner extends ScreepsTest<ITestRunnerMemory>
 
 	private test: IScreepsTest;
 
-	constructor()
+	constructor(sourceMap: SourceMapWrapper)
 	{
-		super();
+		super(sourceMap);
 
 		this.memory.current = this.memory.current || 0;
 		this.memory.reports = this.memory.reports || [];
@@ -54,7 +55,7 @@ class TestRunner extends ScreepsTest<ITestRunnerMemory>
 
 		logger.error(`running ${this.current.constructor.name}, test ${this.memory.current + 1} of ${global.testRegistry.length}`);
 
-		this.test = new this.current.constructor();
+		this.test = new this.current.constructor(this.sourceMap);
 
 		this.test.beforeTick();
 	}
@@ -100,9 +101,9 @@ class TestRunner extends ScreepsTest<ITestRunnerMemory>
 	}
 }
 
-export function runAllTests()
+export function runAllTests(sourceMap: SourceMapWrapper)
 {
-	const runner = new TestRunner();
+	const runner = new TestRunner(sourceMap);
 
 	runner.beforeTick();
 
@@ -118,7 +119,7 @@ export function runAllTests()
 
 export function TestDefinition(order: number)
 {
-	return (constructor: new () => IScreepsTest) =>
+	return (constructor: new (sourceMap: SourceMapWrapper) => IScreepsTest) =>
 	{
 		if (global.testRegistry === undefined)
 		{
