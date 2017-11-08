@@ -1,4 +1,4 @@
-import { ScreepsTest, IScreepsTest } from "./test";
+import { ScreepsTest, IScreepsTest, initializeMemory, getCodeId } from "./test";
 import { logger } from "../harness/logger";
 import { SourceMapWrapper } from "./sourcemap";
 
@@ -101,15 +101,14 @@ class TestRunner extends ScreepsTest<ITestRunnerMemory>
 	}
 }
 
-export function runAllTests(testId: string, sourceMap: SourceMapWrapper)
-{
-	if (_.get(Memory, ["__test_harness", "id"]) !== testId)
-	{
-		global.restartTest();
-		_.set(Memory, ["__test_harness", "id"], testId);
-	}
+let runner: TestRunner;
 
-	const runner = new TestRunner(sourceMap);
+export function runAllTests(codeId: string, sourceMap: SourceMapWrapper)
+{
+	initializeMemory(codeId, false);
+
+	if (runner === undefined)
+		runner = new TestRunner(sourceMap);
 
 	runner.beforeTick();
 
@@ -138,5 +137,5 @@ export function TestDefinition(order: number)
 
 global.restartTest = function()
 {
-	delete Memory.__test_harness;
+	initializeMemory(getCodeId(), true);
 };

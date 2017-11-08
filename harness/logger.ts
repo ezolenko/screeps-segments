@@ -6,6 +6,11 @@ class Logger implements ILogger
 	{
 		console.log(message);
 	}
+
+	public info(message: string)
+	{
+		console.log(message);
+	}
 }
 
 export const logger: ILogger = new Logger();

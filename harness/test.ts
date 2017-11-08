@@ -14,7 +14,7 @@ export interface IScreepsTestMemory extends IScreepsTestProfilerMemory
 
 export interface ITestHarnessMemory
 {
-	id?: string;
+	id: string;
 	suites: { [id: string]: IScreepsTestMemory };
 }
 
@@ -35,9 +35,33 @@ declare global
 	}
 }
 
-export function initializeMemory()
+export interface IMemoryRoot
 {
-	
+	memory: ITestHarnessMemory;
+	path: string;
+}
+
+let root: IMemoryRoot =
+{
+	get memory(): ITestHarnessMemory { return Memory.__test_harness; },
+	set memory(value: ITestHarnessMemory) { Memory.__test_harness = value; },
+	path: "Memory.__test_harness",
+};
+
+export function overrideMemoryRoot(override: IMemoryRoot)
+{
+	root = override;
+}
+
+export function getCodeId()
+{
+	return root.memory.id;
+}
+
+export function initializeMemory(codeId: string, restart: boolean)
+{
+	if (root.memory === undefined || root.memory.id !== codeId || restart)
+		root.memory = { id: codeId, suites: { } };
 }
 
 export abstract class ScreepsTest<M extends {}> extends TestProfiler implements IScreepsTest
@@ -45,12 +69,10 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 	constructor(protected sourceMap: SourceMapWrapper)
 	{
 		super();
-		if (Memory.__test_harness === undefined)
-			Memory.__test_harness = { suites: { } };
-		if (Memory.__test_harness.suites[this.constructor.name] === undefined)
+		if (root.memory.suites[this.constructor.name] === undefined)
 		{
-			logger.error(`creating Memory.__test_harness.suites[${this.constructor.name}]`);
-			Memory.__test_harness.suites[this.constructor.name] =
+			logger.info(`creating ${root.path}[${this.constructor.name}]`);
+			root.memory.suites[this.constructor.name] =
 			{
 				p: {},
 				cpu: {},
@@ -70,12 +92,12 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 
 	protected get memory(): M
 	{
-		return Memory.__test_harness.suites[this.constructor.name].p as M;
+		return root.memory.suites[this.constructor.name].p as M;
 	}
 
 	protected get m()
 	{
-		return Memory.__test_harness.suites[this.constructor.name];
+		return root.memory.suites[this.constructor.name];
 	}
 
 	public beforeTick()
@@ -93,7 +115,7 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 	public cleanup()
 	{
 		this.cleanupProfiler();
-		delete Memory.__test_harness.suites[this.constructor.name];
+		delete root.memory.suites[this.constructor.name];
 	}
 
 	protected timer(opts: { fireFirst?: boolean; interval: (() => number) | number }, cb: () => boolean): boolean
