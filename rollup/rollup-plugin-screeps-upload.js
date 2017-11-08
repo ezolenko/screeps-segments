@@ -9,6 +9,8 @@ const readDir = promisify(fs.readdir);
 
 async function upload(configFile, bundleFile)
 {
+	if (configFile === undefined)
+		return;
 	try
 	{
 		const api = new ScreepsAPI();
@@ -46,7 +48,9 @@ async function upload(configFile, bundleFile)
 function getConfigName()
 {
 	const index = process.argv.indexOf("--screeps");
-	return process.argv[index + 1];
+	if (index > 0)
+		return process.argv[index + 1];
+	return undefined;
 }
 
 export default function screepsUpload(configFile)
