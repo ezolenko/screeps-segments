@@ -14,6 +14,7 @@ export interface IScreepsTestMemory extends IScreepsTestProfilerMemory
 
 export interface ITestHarnessMemory
 {
+	id?: string;
 	suites: { [id: string]: IScreepsTestMemory };
 }
 
@@ -32,6 +33,11 @@ declare global
 	{
 		__test_harness: ITestHarnessMemory;
 	}
+}
+
+export function initializeMemory()
+{
+	
 }
 
 export abstract class ScreepsTest<M extends {}> extends TestProfiler implements IScreepsTest

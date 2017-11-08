@@ -101,8 +101,14 @@ class TestRunner extends ScreepsTest<ITestRunnerMemory>
 	}
 }
 
-export function runAllTests(sourceMap: SourceMapWrapper)
+export function runAllTests(testId: string, sourceMap: SourceMapWrapper)
 {
+	if (_.get(Memory, ["__test_harness", "id"]) !== testId)
+	{
+		global.restartTest();
+		_.set(Memory, ["__test_harness", "id"], testId);
+	}
+
 	const runner = new TestRunner(sourceMap);
 
 	runner.beforeTick();

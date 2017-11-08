@@ -9,5 +9,5 @@ sourceMap.setVscInfo(LOG_VSC);
 
 export function loop()
 {
-	runAllTests(sourceMap);
+	runAllTests(LOG_VSC.revision, sourceMap);
 }
