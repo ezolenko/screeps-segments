@@ -17,6 +17,11 @@
             "type": "npm",
             "script": "build-test",
             "problemMatcher": []
+        },
+        {
+            "type": "npm",
+            "script": "upload-test",
+            "problemMatcher": []
         }
     ]
 }
