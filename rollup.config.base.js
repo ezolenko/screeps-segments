@@ -6,6 +6,7 @@ import fileSize from "rollup-plugin-filesize";
 import sourcemaps from "rollup-plugin-sourcemaps";
 import screepsSourcemap from "./rollup/rollup-plugin-screeps-sourcemap";
 import screepsVsc from "./rollup/rollup-plugin-screeps-vsc";
+import screepsUpload from "./rollup/rollup-plugin-screeps-upload";
 
 export default {
 	sourcemap: true,
@@ -19,7 +20,8 @@ export default {
 		commonjs({ ignoreGlobal: true, include: "node_modules/**" }),
 		cleanup(),
 		fileSize(),
-		screepsSourcemap()
+		screepsSourcemap(),
+		screepsUpload(),
 	],
 
 	banner: "/* eslint-disable */",

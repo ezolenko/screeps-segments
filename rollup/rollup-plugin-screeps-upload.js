@@ -30,7 +30,7 @@ async function upload(configFile, bundleFile)
 		const newBranch = await branch();
 		await loadCode;
 
-		console.log(`uploading ${Object.keys(code).join(", ")} to ${newBranch}`);
+		console.log(`screeps-upload:\n\thost: ${api.opts.url}\n\tbranch: ${newBranch}\n\tfiles:\n\t\t${Object.keys(code).join("\n\t\t")}`);
 
 		if (branches.includes(newBranch))
 			await api.code.set(newBranch, code);
@@ -39,8 +39,14 @@ async function upload(configFile, bundleFile)
 	}
 	catch(err)
 	{
-		console.log(`failed screeps upload: ${err.stack}`);
+		console.log(`screeps-upload: failed -- ${err.stack}`);
 	}
+}
+
+function getConfigName()
+{
+	const index = process.argv.indexOf("--screeps");
+	return process.argv[index + 1];
 }
 
 export default function screepsUpload(configFile)
@@ -50,7 +56,7 @@ export default function screepsUpload(configFile)
 
 		onwrite({ file })
 		{
-			Promise.resolve(upload(configFile, file));
-		}
+			Promise.resolve(upload(configFile === undefined ? getConfigName() : configFile, file));
+		},
 	};
 }

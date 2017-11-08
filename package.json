@@ -10,7 +10,7 @@
     "typings": "typings",
     "build-lib": "rollup -c rollup.config.lib.js",
     "build-test": "rollup -c rollup.config.test.js",
-    "upload-test": "rollup -c rollup.config.test.ptr.js"
+    "upload-test": "rollup -c rollup.config.test.js --screeps .screeps.config.json"
   },
   "author": "",
   "license": "MIT",
