@@ -42,6 +42,30 @@ interface IProfilerStats
 	parentStats: IParentStat[];
 }
 
+class PrototypeProxyHandler<T extends { [property: string]: any }> implements ProxyHandler<T>
+{
+	constructor(private profiler: TestProfiler, private label: string) {}
+
+	public get(target: T, p: PropertyKey, _receiver: any): any
+	{
+		const original = target[p];
+		console.log(`proxy property: ${this.label}, ${p}`);
+
+		if (original instanceof Function)
+		{
+			const profiler = this.profiler;
+			const label = `${this.label}.${p}`;
+			return function(this: any, ...args: any[])
+			{
+				// tslint:disable-next-line:no-string-literal
+				return profiler["trace"](original, this, args, label);
+			};
+		}
+		else
+			return original;
+	}
+}
+
 export abstract class TestProfiler
 {
 	private profiling = true;
@@ -58,11 +82,6 @@ export abstract class TestProfiler
 	}
 
 	public afterTick(): void
-	{
-		this.profiling = false;
-	}
-
-	protected cleanupProfiler()
 	{
 		this.profiling = false;
 		this.onCleanup.forEach((c) => c());
@@ -161,7 +180,7 @@ export abstract class TestProfiler
 		stat.calls++;
 		stat.totalTime += time;
 
-		if (!parent)
+		if (parent === undefined)
 			return;
 
 		const parentString = "  by ".concat(parent);
@@ -180,66 +199,39 @@ export abstract class TestProfiler
 		parentStat.totalTime += time;
 	}
 
-	protected wrapFunction(originalFunction: Function, label: string)
+	protected trace(fn: Function, target: any, a: any[], label: string): any
 	{
-		const profiler = this;
-		return function(this: any)
-		{
-			if (!profiler.profiling)
-				return originalFunction.apply(this, arguments);
+		if (!this.profiling)
+			return fn.apply(target, a);
 
-			const start = Game.cpu.getUsed();
-			const usedElsewhereStart = profiler.usedElsewhere;
+		const start = Game.cpu.getUsed();
+		const usedElsewhereStart = this.usedElsewhere;
 
-			const parent = profiler.currentlyExecuting;
-			profiler.currentlyExecuting = label;
+		const parent = this.currentlyExecuting;
+		this.currentlyExecuting = label;
 
-			const result = originalFunction.apply(this, arguments);
+		const result = fn.apply(target, arguments);
 
-			const end = Game.cpu.getUsed();
-			const usedElsewhereEnd = profiler.usedElsewhere;
+		const end = Game.cpu.getUsed();
+		const usedElsewhereEnd = this.usedElsewhere;
 
-			profiler.record(parent, label, end - start - (usedElsewhereEnd - usedElsewhereStart));
+		this.record(parent, label, end - start - (usedElsewhereEnd - usedElsewhereStart));
 
-			profiler.currentlyExecuting = parent;
+		this.currentlyExecuting = parent;
 
-			return result;
-		};
+		return result;
 	}
 
-	protected profileObject(object: any, label: string)
+	protected profileInstance(o: any, label: string): void
 	{
-		const objectToWrap = object.__proto__ ? object.__proto__ : object.prototype ? object.prototype : object;
+		const proto = o.__proto__;
+		const { proxy, revoke } = Proxy.revocable(proto, new PrototypeProxyHandler(this, label));
+		o.__proto__ = proxy;
 
-		if (objectToWrap.__profilerWrapped)
+		this.onCleanup.push(() =>
 		{
-			console.log(`profiler already wrapped for: ${label}, ${Object.getOwnPropertyNames(objectToWrap)}`);
-			return objectToWrap;
-		}
-
-		Object.getOwnPropertyNames(objectToWrap).forEach((functionName) =>
-		{
-			const descriptor = Object.getOwnPropertyDescriptor(objectToWrap, functionName);
-			if (!descriptor)
-				return;
-
-			const hasAccessor = descriptor.get || descriptor.set;
-			if (hasAccessor)
-				return;
-
-			const isFunction = typeof descriptor.value === "function";
-			if (!isFunction)
-				return;
-
-			const extendedLabel = `${label}.${functionName}`;
-			const originalFunction = objectToWrap[functionName] as Function;
-			objectToWrap[functionName] = this.wrapFunction(originalFunction, extendedLabel);
-			this.onCleanup.push(() => objectToWrap[functionName] = originalFunction);
+			o.__proto__ = proto;
+			revoke();
 		});
-
-		objectToWrap.__profilerWrapped = true;
-		this.onCleanup.push(() => delete objectToWrap.__profilerWrapped);
-
-		return objectToWrap;
 	}
 }

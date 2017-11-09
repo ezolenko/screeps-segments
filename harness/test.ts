@@ -114,7 +114,6 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 
 	public cleanup()
 	{
-		this.cleanupProfiler();
 		delete root.memory.suites[this.constructor.name];
 	}
 
