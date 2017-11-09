@@ -3,5 +3,8 @@
     "cSpell.words": [
         "Sourcemap",
         "jsnext"
+    ],
+    "gitlens.codeLens.locations": [
+        "document"
     ]
 }
