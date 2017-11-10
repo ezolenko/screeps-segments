@@ -16,7 +16,7 @@ export class SegmentsBufferTest extends ScreepsTest<{}>
 	{
 		super.beforeTick();
 
-		// this.profileInstance(this.buffer, SegmentBuffer.name);
+		this.profileInstance(this.buffer, SegmentBuffer.name);
 
 		this.buffer.beforeTick();
 	}
