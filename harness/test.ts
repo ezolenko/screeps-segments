@@ -69,6 +69,7 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 	constructor(protected sourceMap: SourceMapWrapper)
 	{
 		super();
+		this.initMemory();
 	}
 
 	public abstract run(): boolean;
@@ -85,7 +86,7 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 		return root.memory.suites[this.constructor.name];
 	}
 
-	public beforeTick()
+	private initMemory()
 	{
 		if (root.memory.suites[this.constructor.name] === undefined)
 		{
@@ -102,7 +103,11 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 				asserts: {},
 			};
 		}
+	}
 
+	public beforeTick()
+	{
+		this.initMemory();
 		super.beforeTick();
 		this.intents.clear();
 	}
