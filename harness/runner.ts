@@ -32,20 +32,20 @@ class TestRunner extends ScreepsTest<ITestRunnerMemory>
 	constructor(sourceMap: SourceMapWrapper)
 	{
 		super(sourceMap);
-
-		this.memory.current = this.memory.current || 0;
-		this.memory.reports = this.memory.reports || [];
-
-		if (!testRegistrySorted)
-		{
-			global.testRegistry.sort((a, b) => a.order - b.order);
-			testRegistrySorted = true;
-		}
 	}
 
 	public beforeTick()
 	{
 		super.beforeTick();
+
+		this.memory.current = this.memory.current || 0;
+		this.memory.reports = this.memory.reports || [];
+		if (!testRegistrySorted)
+		{
+			global.testRegistry.sort((a, b) => a.order - b.order);
+			testRegistrySorted = true;
+			console.log(`sorting test registry`);
+		}
 
 		if (this.allDone)
 		{
@@ -53,9 +53,9 @@ class TestRunner extends ScreepsTest<ITestRunnerMemory>
 			return;
 		}
 
-		logger.error(`running ${this.current.constructor.name}, test ${this.memory.current + 1} of ${global.testRegistry.length}`);
-
 		this.test = new this.current.constructor(this.sourceMap);
+
+		logger.error(`running ${this.test.constructor.name}, test ${this.memory.current + 1} of ${global.testRegistry.length}`);
 
 		this.test.beforeTick();
 	}
@@ -131,6 +131,7 @@ export function TestDefinition(order: number)
 			global.testRegistry = [];
 		}
 
+		console.log(`registering test ${constructor.name} ${order}`);
 		global.testRegistry.push({ constructor, order });
 	};
 }

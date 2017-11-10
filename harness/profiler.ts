@@ -85,11 +85,13 @@ export abstract class TestProfiler
 
 	public beforeTick(): void
 	{
+		console.log(`profiler beforeTick for ${this.constructor.name}`);
 		this.profiling = true;
 	}
 
 	public afterTick(): void
 	{
+		console.log(`profiler afterTick for ${this.constructor.name}, cleanup: ${this.onCleanup.length}`);
 		this.profiling = false;
 		this.onCleanup.reverse().forEach((c) => c());
 		this.onCleanup = [];
@@ -234,36 +236,69 @@ export abstract class TestProfiler
 		if (o === undefined)
 			return;
 
-		let key: any;
-		for (key in o)
+		console.log(`profiling ${label}`);
+
+		const profiler = this;
+		Object.getOwnPropertyNames(o.__proto__).forEach((key) =>
 		{
-			if (o.hasOwnProperty(key) || o.__proto__.hasOwnProperty(key))
+			const fullLabel = `${label}.${key}`;
+
+			if (key === "constructor")
+				return;
+
+			const value = o.__proto__[key];
+			console.log(`profiling ${fullLabel}`);
+
+			if (_.isFunction(value))
 			{
-				const value = o[key];
-				const fullLabel = `${label}.${key}`;
-				if (_.isFunction(value))
+				console.log(`wrapping ${fullLabel}`);
+				o.__proto__[key] = function(this: any, ...args: any[])
 				{
-					console.log(`profiling ${fullLabel}`);
-					const profiler = this;
-					o[key] = function(this: any, ...args: any[])
-					{
-						// tslint:disable-next-line:no-string-literal
-						return profiler["trace"](value, this, args, fullLabel);
-					};
-					this.onCleanup.push(() =>
-					{
-						console.log(`unprofiling ${fullLabel}`);
-						o[key] = value;
-					});
-				}
-				if (_.isObject(value))
+					console.log(`called ${fullLabel}`);
+					// tslint:disable-next-line:no-string-literal
+					return profiler["trace"](value, this, args, fullLabel);
+				};
+				this.onCleanup.push(() =>
 				{
-					this.profileInstance(value, fullLabel);
-				}
+					console.log(`unprofiling ${fullLabel}`);
+					o.__proto__[key] = value;
+				});
 			}
-			else
-				console.log(`ignoring ${label}.${key}`);
-		}
+
+		});
+
+		// let key: any;
+		// for (key in o.__proto__)
+		// {
+		// 	console.log(`profiling ${label}.${key}`);
+
+		// 	if (o.hasOwnProperty(key) || o.__proto__.hasOwnProperty(key))
+		// 	{
+		// 		const value = o[key];
+		// 		const fullLabel = `${label}.${key}`;
+		// 		if (_.isFunction(value))
+		// 		{
+		// 			console.log(`profiling ${fullLabel}`);
+		// 			const profiler = this;
+		// 			o[key] = function(this: any, ...args: any[])
+		// 			{
+		// 				// tslint:disable-next-line:no-string-literal
+		// 				return profiler["trace"](value, this, args, fullLabel);
+		// 			};
+		// 			this.onCleanup.push(() =>
+		// 			{
+		// 				console.log(`unprofiling ${fullLabel}`);
+		// 				o[key] = value;
+		// 			});
+		// 		}
+		// 		if (_.isObject(value))
+		// 		{
+		// 			this.profileInstance(value, fullLabel);
+		// 		}
+		// 	}
+		// 	else
+		// 		console.log(`ignoring ${label}.${key}`);
+		// }
 
 		// const proto = o.__proto__;
 
