@@ -42,29 +42,36 @@ interface IProfilerStats
 	parentStats: IParentStat[];
 }
 
-class PrototypeProxyHandler<T extends { [property: string]: any }> implements ProxyHandler<T>
-{
-	constructor(private profiler: TestProfiler, private label: string) {}
+// class PrototypeProxyHandler<T extends { [property: string]: any }> implements ProxyHandler<T>
+// {
+// 	constructor(private profiler: TestProfiler, private label: string) {}
 
-	public get(target: T, p: PropertyKey, _receiver: any): any
-	{
-		const original = target[p];
-		console.log(`proxy property: ${this.label}, ${p}`);
+// 	public get(target: T, p: PropertyKey, _receiver: any): any
+// 	{
+// 		const original = target[p];
+// 		console.log(`proxy property: ${this.label}, ${p}`);
 
-		if (original instanceof Function)
-		{
-			const profiler = this.profiler;
-			const label = `${this.label}.${p}`;
-			return function(this: any, ...args: any[])
-			{
-				// tslint:disable-next-line:no-string-literal
-				return profiler["trace"](original, this, args, label);
-			};
-		}
-		else
-			return original;
-	}
-}
+// 		if (original instanceof Function)
+// 		{
+// 			const profiler = this.profiler;
+// 			const label = `${this.label}.${p}`;
+// 			return function(this: any, ...args: any[])
+// 			{
+// 				// tslint:disable-next-line:no-string-literal
+// 				return profiler["trace"](original, this, args, label);
+// 			};
+// 		}
+// 		else
+// 			return original;
+// 	}
+
+// 	public set(target: T, p: PropertyKey, value: any, _receiver: any): boolean
+// 	{
+// 		console.log(`proxy set property: ${this.label}, ${p}`);
+// 		target[p] = value;
+// 		return true;
+// 	}
+// }
 
 export abstract class TestProfiler
 {
@@ -84,7 +91,7 @@ export abstract class TestProfiler
 	public afterTick(): void
 	{
 		this.profiling = false;
-		this.onCleanup.forEach((c) => c());
+		this.onCleanup.reverse().forEach((c) => c());
 		this.onCleanup = [];
 	}
 
@@ -224,14 +231,53 @@ export abstract class TestProfiler
 
 	protected profileInstance(o: any, label: string): void
 	{
-		const proto = o.__proto__;
-		const { proxy, revoke } = Proxy.revocable(proto, new PrototypeProxyHandler(this, label));
-		o.__proto__ = proxy;
+		if (o === undefined)
+			return;
 
-		this.onCleanup.push(() =>
+		let key: any;
+		for (key in o)
 		{
-			o.__proto__ = proto;
-			revoke();
-		});
+			if (o.hasOwnProperty(key) || o.__proto__.hasOwnProperty(key))
+			{
+				const value = o[key];
+				const fullLabel = `${label}.${key}`;
+				if (_.isFunction(value))
+				{
+					console.log(`profiling ${fullLabel}`);
+					const profiler = this;
+					o[key] = function(this: any, ...args: any[])
+					{
+						// tslint:disable-next-line:no-string-literal
+						return profiler["trace"](value, this, args, fullLabel);
+					};
+					this.onCleanup.push(() =>
+					{
+						console.log(`unprofiling ${fullLabel}`);
+						o[key] = value;
+					});
+				}
+				if (_.isObject(value))
+				{
+					this.profileInstance(value, fullLabel);
+				}
+			}
+			else
+				console.log(`ignoring ${label}.${key}`);
+		}
+
+		// const proto = o.__proto__;
+
+		// console.log(`profiling ${label}, ${o.constructor.name}`);
+
+		// const { proxy, revoke } = Proxy.revocable(proto, new PrototypeProxyHandler(this, label));
+		// o.__proto__ = proxy;
+
+		// console.log(`profiled ${label}, constructor now is ${o.constructor.name}`);
+
+		// this.onCleanup.push(() =>
+		// {
+		// 	o.__proto__ = proto;
+		// 	revoke();
+		// });
 	}
 }
