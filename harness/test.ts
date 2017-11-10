@@ -69,21 +69,6 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 	constructor(protected sourceMap: SourceMapWrapper)
 	{
 		super();
-		if (root.memory.suites[this.constructor.name] === undefined)
-		{
-			logger.info(`creating ${root.path}[${this.constructor.name}]`);
-			root.memory.suites[this.constructor.name] =
-			{
-				p: {},
-				cpu: {},
-				started: Game.time,
-				timers: {},
-				runOnce: {},
-				runSeq: {},
-				runAll: {},
-				asserts: {},
-			};
-		}
 	}
 
 	public abstract run(): boolean;
@@ -102,6 +87,22 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 
 	public beforeTick()
 	{
+		if (root.memory.suites[this.constructor.name] === undefined)
+		{
+			logger.info(`creating ${root.path}[${this.constructor.name}]`);
+			root.memory.suites[this.constructor.name] =
+			{
+				p: {},
+				cpu: {},
+				started: Game.time,
+				timers: {},
+				runOnce: {},
+				runSeq: {},
+				runAll: {},
+				asserts: {},
+			};
+		}
+
 		super.beforeTick();
 		this.intents.clear();
 	}
