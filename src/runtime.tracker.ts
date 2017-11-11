@@ -1,16 +1,18 @@
 import { IMemoryRoot } from "./memory.root";
 
+export interface IRuntimeNode
+{
+	reuse: number;
+	totalReuse: number;
+	lastSeen: number;
+}
+
 export interface IRuntimeTrackerMemory
 {
 	lastNode?: string;
 	nodes:
 	{
-		[node: string]:
-		{
-			reuse: number;
-			totalReuse: number;
-			lastSeen: number;
-		};
+		[node: string]: IRuntimeNode;
 	};
 }
 
@@ -89,11 +91,36 @@ export class RuntimeTracker
 		}
 	}
 
+	private activeNodes()
+	{
+		const nodes: Array<{ id: string, node: IRuntimeNode, diff: number, p: number }> = _
+			.map(root.memory.nodes, (node, id) =>
+			{
+				return {
+					id: id!,
+					node,
+					diff: 0,
+					p: Game.time - node.lastSeen + node.totalReuse,
+				};
+			})
+			.sort((e) => e.p);
+		for (let i = 1; i < nodes.length; ++i)
+		{
+			nodes[i].diff = nodes[i].p / nodes[i - 1].p;
+			console.log(JSON.stringify(nodes[i]), "over", JSON.stringify(nodes[i - 1]));
+		}
+		return nodes.slice(0, _.findIndex(nodes, (e) => e.diff > 1.5)).map((e) => ({ [e.id]: e.node }));
+	}
+
 	public report(): string
 	{
+		const active = this.activeNodes();
+
+		console.log(JSON.stringify(active));
+
 		return `T: ${Game.time}, last id: ${root.memory.lastNode}, ${this.switchedNodes ? "switched" : "same node"}\n\t` + _.map(root.memory.nodes, (node, key) =>
 		{
-			return `${key === this.currentNodeId ? "N" : "n"}[id: ${key}, t: ${node.totalReuse}, run: ${node.reuse}, lr: ${Game.time - node.lastSeen}]`;
+			return `${key === this.currentNodeId ? "N" : "n"}${_.has(active, key!) ? "A" : "i"}[id: ${key}, t: ${node.totalReuse}, run: ${node.reuse}, lr: ${Game.time - node.lastSeen}]`;
 		}).join("\n\t");
 	}
 
