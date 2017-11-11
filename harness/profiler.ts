@@ -85,13 +85,11 @@ export abstract class TestProfiler
 
 	public beforeTick(): void
 	{
-		console.log(`profiler beforeTick for ${this.constructor.name}`);
 		this.profiling = true;
 	}
 
 	public afterTick(): void
 	{
-		console.log(`profiler afterTick for ${this.constructor.name}, cleanup: ${this.onCleanup.length}`);
 		this.profiling = false;
 		this.onCleanup.reverse().forEach((c) => c());
 		this.onCleanup = [];
@@ -233,7 +231,7 @@ export abstract class TestProfiler
 
 	protected profileInstance(o: any, label: string): void
 	{
-		if (o === undefined)
+		if (o === undefined || o.__proto__.___profiled)
 			return;
 
 		console.log(`profiling ${label}`);
@@ -241,22 +239,39 @@ export abstract class TestProfiler
 		const profiler = this;
 		Object.getOwnPropertyNames(o.__proto__).forEach((key) =>
 		{
+			const descriptor = Object.getOwnPropertyDescriptor(o.__proto__, key);
+
+			if (!descriptor)
+				return;
+
+			const hasAccessor = descriptor.get || descriptor.set;
+			if (hasAccessor)
+				return;
+
+			const isFunction = typeof descriptor.value === "function";
+			if (!isFunction)
+				return;
+
 			const fullLabel = `${label}.${key}`;
 
 			if (key === "constructor")
 				return;
 
+			o.__proto__.___profiled = true;
+
 			const value = o.__proto__[key];
 			console.log(`profiling ${fullLabel}`);
 
-			if (_.isFunction(value))
+			if (isFunction)
 			{
 				console.log(`wrapping ${fullLabel}`);
 				o.__proto__[key] = function(this: any, ...args: any[])
 				{
 					console.log(`called ${fullLabel}`);
 					// tslint:disable-next-line:no-string-literal
-					return profiler["trace"](value, this, args, fullLabel);
+					const ret = profiler["trace"](value, this, args, fullLabel);
+
+					console.log(`returned ${ret}`);
 				};
 				this.onCleanup.push(() =>
 				{

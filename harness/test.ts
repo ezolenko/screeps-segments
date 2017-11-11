@@ -1,6 +1,7 @@
 import { IScreepsTestProfilerMemory, TestProfiler } from "./profiler";
 import { logger } from "./logger";
 import { SourceMapWrapper } from "./sourcemap";
+import { IMemoryRoot } from "../src/memory.root";
 
 export interface IScreepsTestMemory extends IScreepsTestProfilerMemory
 {
@@ -35,20 +36,14 @@ declare global
 	}
 }
 
-export interface IMemoryRoot
-{
-	memory: ITestHarnessMemory;
-	path: string;
-}
-
-let root: IMemoryRoot =
+let root: IMemoryRoot<ITestHarnessMemory> =
 {
 	get memory(): ITestHarnessMemory { return Memory.__test_harness; },
 	set memory(value: ITestHarnessMemory) { Memory.__test_harness = value; },
 	path: "Memory.__test_harness",
 };
 
-export function overrideMemoryRoot(override: IMemoryRoot)
+export function overrideMemoryRoot(override: IMemoryRoot<ITestHarnessMemory>)
 {
 	root = override;
 }

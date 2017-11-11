@@ -1,6 +1,7 @@
 import { ScreepsTest, IScreepsTest, initializeMemory, getCodeId } from "./test";
 import { logger } from "../harness/logger";
 import { SourceMapWrapper } from "./sourcemap";
+import { tracker } from "../src/runtime.tracker";
 
 interface ITestRunnerMemory
 {
@@ -110,15 +111,26 @@ export function runAllTests(codeId: string, sourceMap: SourceMapWrapper)
 	if (runner === undefined)
 		runner = new TestRunner(sourceMap);
 
-	runner.beforeTick();
+	tracker.beforeTick();
+	logger.error(tracker.report());
 
-	const res = runner.run();
+	let res: boolean;
+	try
+	{
+		runner.beforeTick();
+		res = runner.run();
+		runner.afterTick();
 
-	runner.afterTick();
+		if (res)
+			logger.error(runner.report());
+	}
+	catch (err)
+	{
+		console.log(`=====================\n${err.stack}\n=====================\n`);
+		res = true;
+	}
 
-	if (res)
-		logger.error(runner.report());
-
+	tracker.afterTick();
 	return res;
 }
 
