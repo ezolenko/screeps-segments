@@ -206,10 +206,10 @@ export abstract class TestProfiler
 		parentStat.totalTime += time;
 	}
 
-	protected trace(fn: Function, target: any, a: any[], label: string): any
+	protected trace(fn: Function, target: any, args: IArguments, label: string): any
 	{
 		if (!this.profiling)
-			return fn.apply(target, a);
+			return fn.apply(target, args);
 
 		const start = Game.cpu.getUsed();
 		const usedElsewhereStart = this.usedElsewhere;
@@ -217,7 +217,7 @@ export abstract class TestProfiler
 		const parent = this.currentlyExecuting;
 		this.currentlyExecuting = label;
 
-		const result = fn.apply(target, arguments);
+		const result = fn.apply(target, args);
 
 		const end = Game.cpu.getUsed();
 		const usedElsewhereEnd = this.usedElsewhere;
@@ -233,8 +233,6 @@ export abstract class TestProfiler
 	{
 		if (o === undefined || o.__proto__.___profiled)
 			return;
-
-		console.log(`profiling ${label}`);
 
 		const profiler = this;
 		Object.getOwnPropertyNames(o.__proto__).forEach((key) =>
@@ -260,24 +258,17 @@ export abstract class TestProfiler
 			o.__proto__.___profiled = true;
 
 			const value = o.__proto__[key];
-			console.log(`profiling ${fullLabel}`);
 
 			if (isFunction)
 			{
-				console.log(`wrapping ${fullLabel}`);
-				o.__proto__[key] = function(this: any, ...args: any[])
+				o.__proto__[key] = function(this: any)
 				{
-					console.log(`called ${fullLabel}`);
 					// tslint:disable-next-line:no-string-literal
-					const ret = profiler["trace"](value, this, args, fullLabel);
-
-					console.log(`returned ${ret}`);
-
+					const ret = profiler.trace(value, this, arguments, fullLabel);
 					return ret;
 				};
 				this.onCleanup.push(() =>
 				{
-					console.log(`unprofiling ${fullLabel}`);
 					o.__proto__[key] = value;
 				});
 			}
