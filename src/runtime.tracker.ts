@@ -107,16 +107,13 @@ export class RuntimeTracker
 		for (let i = 1; i < nodes.length; ++i)
 		{
 			nodes[i].diff = nodes[i].p / nodes[i - 1].p;
-			console.log(JSON.stringify(nodes[i]), "over", JSON.stringify(nodes[i - 1]));
 		}
-		return nodes.slice(0, _.findIndex(nodes, (e) => e.diff > 1.5)).map((e) => ({ [e.id]: e.node }));
+		return nodes.slice(0, _.findIndex(nodes, (e) => e.diff > 1.5)).map((e) => ({ [e.id]: e.node })).reduce(_.merge);
 	}
 
 	public report(): string
 	{
 		const active = this.activeNodes();
-
-		console.log(JSON.stringify(active));
 
 		return `T: ${Game.time}, last id: ${root.memory.lastNode}, ${this.switchedNodes ? "switched" : "same node"}\n\t` + _.map(root.memory.nodes, (node, key) =>
 		{
