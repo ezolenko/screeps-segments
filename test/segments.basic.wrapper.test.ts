@@ -25,7 +25,7 @@ export class SegmentsBasicWrapperTest extends ScreepsTest<ISegmentsBasicWrapperT
 	{
 		super.beforeTick();
 
-		// this.profileInstance(this.wrapper, SegmentsBasicWrapper.name);
+		this.profileInstance(this.wrapper, SegmentsBasicWrapper.name);
 
 		this.wrapper.beforeTick();
 	}
