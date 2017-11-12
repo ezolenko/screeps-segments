@@ -272,6 +272,8 @@ export abstract class TestProfiler
 					const ret = profiler["trace"](value, this, args, fullLabel);
 
 					console.log(`returned ${ret}`);
+
+					return ret;
 				};
 				this.onCleanup.push(() =>
 				{
