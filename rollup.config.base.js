@@ -6,7 +6,7 @@ import fileSize from "rollup-plugin-filesize";
 import sourcemaps from "rollup-plugin-sourcemaps";
 import screepsSourcemap from "./rollup/rollup-plugin-screeps-sourcemap";
 import screepsVsc from "./rollup/rollup-plugin-screeps-vsc";
-import screepsUpload from "./rollup/rollup-plugin-screeps-upload";
+import screepsUpload from "rollup-plugin-screeps-upload";
 
 export default {
 	sourcemap: true,
