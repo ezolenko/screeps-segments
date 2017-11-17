@@ -39,7 +39,7 @@ export class SegmentsBufferTest extends ScreepsTest<{}>
 
 	private oneTickAssignment(): boolean
 	{
-		return this.runSequence(10,
+		return this.runSequence(3,
 		[
 			(iteration) =>
 			{
@@ -51,35 +51,35 @@ export class SegmentsBufferTest extends ScreepsTest<{}>
 				this.buffer.set(id, data);
 				const segment = this.buffer.get(id);
 
-				this.assert(segment.status === eSegmentBufferStatus.Ready);
-				this.assert(segment.data === data);
+				this.assertEqual(segment.status, eSegmentBufferStatus.Ready);
+				this.assertEqual(segment.data, data);
 
 				// tslint:disable:no-string-literal
-				this.assert(this.buffer["cache"][id].d === data);
-				this.assert(this.buffer["cache"][id].version === iteration);
-				this.assert(this.buffer["cache"][id].metadata.cacheMiss === 0);
-				this.assert(this.buffer["cache"][id].metadata.getCount === iteration + 1);
-				this.assert(this.buffer["cache"][id].metadata.lastRead === Game.time);
-				this.assert(this.buffer["cache"][id].metadata.lastReadRequest === Game.time);
-				this.assert(this.buffer["cache"][id].metadata.lastWrite === Game.time);
-				this.assert(this.buffer["cache"][id].metadata.lastWriteRequest === Game.time);
-				this.assert(this.buffer["cache"][id].metadata.locked === undefined);
-				this.assert(this.buffer["cache"][id].metadata.lockedCount === 0);
-				this.assert(this.buffer["cache"][id].metadata.readCount === iteration + 1);
-				this.assert(this.buffer["cache"][id].metadata.readRequestCount === iteration + 1);
-				this.assert(this.buffer["cache"][id].metadata.savedVersion === iteration);
-				this.assert(this.buffer["cache"][id].metadata.setCount === iteration + 1);
-				this.assert(this.buffer["cache"][id].metadata.writeCount === iteration + 1);
-				this.assert(this.buffer["cache"][id].metadata.writeRequestCount === iteration + 1);
+				this.assertEqual(this.buffer["cache"][id].d, data);
+				this.assertEqual(this.buffer["cache"][id].version, iteration);
+				this.assertEqual(this.buffer["cache"][id].metadata.cacheMiss, 0);
+				this.assertEqual(this.buffer["cache"][id].metadata.getCount, iteration);
+				this.assertEqual(this.buffer["cache"][id].metadata.lastRead, Game.time);
+				this.assertEqual(this.buffer["cache"][id].metadata.lastReadRequest, Game.time);
+				this.assertEqual(this.buffer["cache"][id].metadata.lastWrite, Game.time);
+				this.assertEqual(this.buffer["cache"][id].metadata.lastWriteRequest, Game.time);
+				this.assertEqual(this.buffer["cache"][id].metadata.locked, undefined);
+				this.assertEqual(this.buffer["cache"][id].metadata.lockedCount, 0);
+				this.assertEqual(this.buffer["cache"][id].metadata.readCount, iteration);
+				this.assertEqual(this.buffer["cache"][id].metadata.readRequestCount, iteration);
+				this.assertEqual(this.buffer["cache"][id].metadata.savedVersion, iteration);
+				this.assertEqual(this.buffer["cache"][id].metadata.setCount, iteration);
+				this.assertEqual(this.buffer["cache"][id].metadata.writeCount, iteration);
+				this.assertEqual(this.buffer["cache"][id].metadata.writeRequestCount, iteration);
 
-				this.assert(this.buffer["memory"].version === this.buffer["version"]);
-				this.assert(this.buffer["memory"].metadata[id] === this.buffer["cache"][id].metadata);
+				this.assertEqual(this.buffer["memory"].version, this.buffer["version"]);
+				this.assertEqual(this.buffer["memory"].metadata[id], this.buffer["cache"][id].metadata);
 
 				const buffer = this.buffer["memory"].buffer[id];
-				this.assert(buffer !== undefined);
+				this.assertNotEqual(buffer, undefined);
 				if (buffer !== undefined)
 				{
-					this.assert(buffer.version === iteration);
+					this.assertEqual(buffer.version, iteration);
 				}
 
 				return true;

@@ -108,7 +108,7 @@ export class RuntimeTracker
 			return {};
 		for (let i = 1; i < nodes.length; ++i)
 			nodes[i].diff = nodes[i].p / nodes[i - 1].p;
-		return nodes.slice(0, _.findIndex(nodes, (e) => e.diff > 2)).map((e) => ({ [e.id]: e.node })).reduce(_.merge);
+		return nodes.slice(0, _.findIndex(nodes, (e) => e.diff > 2)).map((e) => ({ [e.id]: e.node })).reduce(_.merge, {});
 	}
 
 	public report(): string

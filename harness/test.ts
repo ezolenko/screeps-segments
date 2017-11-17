@@ -10,7 +10,7 @@ export interface IScreepsTestMemory extends IScreepsTestProfilerMemory
 	runOnce: { [id: string]: 1 };
 	runSeq: { [id: string]: { index: number, repeat: number } };
 	runAll: { [id: string]: { all: Array<0 | 1>, done?: 1 } };
-	asserts: { [line: string]: { s: number, f: number, l: string, c?: string } };
+	asserts: { [line: string]: { s: number, f: number, l: string, c?: string, v?: string } };
 }
 
 export interface ITestHarnessMemory
@@ -211,9 +211,9 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 		return entry.done === 1;
 	}
 
-	protected assert(expression: boolean, comment?: string): void
+	private _assert(expression: boolean, comment?: string, v?: () => string): void
 	{
-		const pos = this.sourceMap.getFileLine(1, true);
+		const pos = this.sourceMap.getFileLine(2, true);
 
 		const id = comment !== undefined ? `${comment} (${pos.final})` : pos.final;
 
@@ -225,12 +225,30 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 		if (expression)
 			entry.s++;
 		else
+		{
 			entry.f++;
+			entry.v = v ? v() : undefined;
+		}
+	}
+
+	protected assert(expression: boolean, comment?: string): void
+	{
+		this._assert(expression, comment);
+	}
+
+	protected assertEqual<T>(expression: T, test: T, comment?: string): void
+	{
+		this._assert(expression === test, comment, () => `expected ${JSON.stringify(test)} got ${JSON.stringify(expression)}`);
+	}
+
+	protected assertNotEqual<T>(expression: T, test: T, comment?: string): void
+	{
+		this._assert(expression !== test, comment, () => `expected ${JSON.stringify(test)} got ${JSON.stringify(expression)}`);
 	}
 
 	public report()
 	{
-		const asserts = _.map(this.m.asserts, (entry) => `${entry.c} // ${entry.l}\n\tsucceeded: ${entry.s}, failed: ${entry.f}`);
+		const asserts = _.map(this.m.asserts, (entry) => `${entry.c} // ${entry.l}\n\tsucceeded: ${entry.s}, failed: ${entry.f} ${entry.v !== undefined ? entry.v : ""}`);
 
 		const profiler = super.report();
 
