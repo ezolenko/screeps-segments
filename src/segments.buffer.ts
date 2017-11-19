@@ -108,7 +108,7 @@ export class SegmentBuffer
 			else
 				e.metadata = metadata;
 		});
-
+  
 		// if buffer is in cache, clear buffer, otherwise upload
 		_.forOwn(this.memory.buffer, (buffer, key) =>
 		{

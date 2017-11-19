@@ -59,6 +59,11 @@ export function initializeMemory(codeId: string, restart: boolean)
 		root.memory = { id: codeId, suites: { } };
 }
 
+function color(str: string, c: string): string
+{
+	return `<font color='${c}'>${str}</font>`;
+}
+
 export abstract class ScreepsTest<M extends {}> extends TestProfiler implements IScreepsTest
 {
 	constructor(protected sourceMap: SourceMapWrapper)
@@ -248,7 +253,12 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 
 	public report()
 	{
-		const asserts = _.map(this.m.asserts, (entry) => `${entry.c} // ${entry.l}\n\tsucceeded: ${entry.s}, failed: ${entry.f} ${entry.v !== undefined ? entry.v : ""}`);
+		const asserts = _.map(this.m.asserts, (entry) =>
+		{
+			const succeeded = entry.f === 0 ? color(`succeeded: ${entry.s}`, "green") : `succeeded: ${entry.s}`;
+			const failed = entry.f > 0 ? color(`failed: ${entry.f}`, "red") + `${entry.v !== undefined ? entry.v : ""}` : "";
+			return `${entry.c} // ${entry.l}\n\t${succeeded}, ${failed}`;
+		});
 
 		const profiler = super.report();
 
