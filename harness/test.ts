@@ -256,7 +256,7 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 		const asserts = _.map(this.m.asserts, (entry) =>
 		{
 			const succeeded = entry.f === 0 ? color(`succeeded: ${entry.s}`, "green") : `succeeded: ${entry.s}`;
-			const failed = entry.f > 0 ? color(`failed: ${entry.f}`, "red") + `${entry.v !== undefined ? entry.v : ""}` : "";
+			const failed = entry.f > 0 ? color(`failed: ${entry.f}`, "red") + `, ${entry.v !== undefined ? entry.v : ""}` : "";
 			return `${entry.c} // ${entry.l}\n\t${succeeded}, ${failed}`;
 		});
 
