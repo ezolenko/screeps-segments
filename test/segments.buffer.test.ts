@@ -37,10 +37,20 @@ export class SegmentsBufferTest extends ScreepsTest<{}>
 		]);
 	}
 
+	// tslint:disable:no-string-literal
 	private oneTickAssignment(): boolean
 	{
-		return this.runSequence(3,
+		return this.runSequence(1,
 		[
+			(iteration) =>
+			{
+				if (iteration === 0)
+				{
+					logger.error(`cleanup`);
+					this.buffer.forgetAll();
+				}
+				return true;
+			},
 			(iteration) =>
 			{
 				logger.error(`oneTickAssignment iteration: ${iteration}`);
@@ -49,26 +59,30 @@ export class SegmentsBufferTest extends ScreepsTest<{}>
 				const data = `${id}${iteration}`;
 
 				this.buffer.set(id, data);
+
+				this.assertEqual(this.buffer["cache"][id].d, data);
+				this.assertEqual(this.buffer["cache"][id].version, iteration);
+				this.assertEqual(this.buffer["cache"][id].metadata.lastRead, iteration === 0 ? -1 : Game.time);
+
 				const segment = this.buffer.get(id);
 
 				this.assertEqual(segment.status, eSegmentBufferStatus.Ready);
 				this.assertEqual(segment.data, data);
 
-				// tslint:disable:no-string-literal
 				this.assertEqual(this.buffer["cache"][id].d, data);
 				this.assertEqual(this.buffer["cache"][id].version, iteration);
 				this.assertEqual(this.buffer["cache"][id].metadata.cacheMiss, 0);
-				this.assertEqual(this.buffer["cache"][id].metadata.getCount, iteration);
-				this.assertEqual(this.buffer["cache"][id].metadata.lastRead, Game.time);
-				this.assertEqual(this.buffer["cache"][id].metadata.lastReadRequest, Game.time);
-				this.assertEqual(this.buffer["cache"][id].metadata.lastWrite, Game.time);
-				this.assertEqual(this.buffer["cache"][id].metadata.lastWriteRequest, Game.time);
+				this.assertEqual(this.buffer["cache"][id].metadata.getCount, iteration + 1);
+				this.assertEqual(this.buffer["cache"][id].metadata.lastRead, iteration === 0 ? -1 : Game.time);
+				this.assertEqual(this.buffer["cache"][id].metadata.lastReadRequest, iteration === 0 ? -1 : Game.time);
+				this.assertEqual(this.buffer["cache"][id].metadata.lastWrite, iteration === 0 ? -1 : Game.time);
+				this.assertEqual(this.buffer["cache"][id].metadata.lastWriteRequest, iteration === 0 ? -1 : Game.time);
 				this.assertEqual(this.buffer["cache"][id].metadata.locked, undefined);
 				this.assertEqual(this.buffer["cache"][id].metadata.lockedCount, 0);
 				this.assertEqual(this.buffer["cache"][id].metadata.readCount, iteration);
 				this.assertEqual(this.buffer["cache"][id].metadata.readRequestCount, iteration);
-				this.assertEqual(this.buffer["cache"][id].metadata.savedVersion, iteration);
-				this.assertEqual(this.buffer["cache"][id].metadata.setCount, iteration);
+				this.assertEqual(this.buffer["cache"][id].metadata.savedVersion, iteration === 0 ? -1 : iteration);
+				this.assertEqual(this.buffer["cache"][id].metadata.setCount, iteration + 1);
 				this.assertEqual(this.buffer["cache"][id].metadata.writeCount, iteration);
 				this.assertEqual(this.buffer["cache"][id].metadata.writeRequestCount, iteration);
 
@@ -82,6 +96,10 @@ export class SegmentsBufferTest extends ScreepsTest<{}>
 					this.assertEqual(buffer.version, iteration);
 				}
 
+				return true;
+			},
+			(_iteration) =>
+			{
 				return true;
 			},
 		]);

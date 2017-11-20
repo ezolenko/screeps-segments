@@ -179,13 +179,18 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 		if (entry.repeat >= times)
 			return true;
 
-		if (entry.index < cb.length && cb[entry.index](entry.repeat))
+		while (entry.index < cb.length && cb[entry.index](entry.repeat))
+		{
 			entry.index += 1;
 
-		if (entry.index >= cb.length)
-		{
-			entry.repeat++;
-			entry.index = 0;
+			if (entry.index >= cb.length)
+			{
+				entry.repeat++;
+				entry.index = 0;
+			}
+
+			if (entry.repeat >= times)
+				break;
 		}
 
 		return entry.repeat >= times;

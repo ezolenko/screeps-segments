@@ -1,6 +1,7 @@
 import { SegmentsBasicWrapper } from "./segments.basic.wrapper";
 import { Grid, Circle, Text } from "./segment.visualizer";
 import { ILogger } from "./ilogger";
+import { IMemoryRoot } from "./memory.root";
 
 export interface ISegmentMetadata
 {
@@ -66,58 +67,63 @@ export enum eSegmentBufferStatus
 	Delayed,
 }
 
+const root: IMemoryRoot<ISegmentBuffer> =
+{
+	get memory(): ISegmentBuffer { return Memory.segments; },
+	set memory(value: ISegmentBuffer) { Memory.segments = value; },
+	path: "Memory.segments",
+};
+
 export class SegmentBuffer
 {
 	private s: SegmentsBasicWrapper;
 	private version = 2;
 	private clearDelay = 3;
 	private cache: ISegmentsCache = {};
-	private get memory() { return Memory.segments; }
+
+	private get memory() { return root.memory; }
 
 	constructor(private log: ILogger)
 	{
 		this.s = new SegmentsBasicWrapper(this.log);
 	}
 
-	public get __test()
+	private reinitMemory()
 	{
-		return {
-			memory: this.memory,
-			cache: this.cache,
+		root.memory =
+		{
+			version: this.version,
+			metadata: {},
+			buffer: {},
 		};
 	}
 
 	public beforeTick()
 	{
 		this.s.beforeTick();
-		if (Memory.segments === undefined || Memory.segments.version !== this.version)
-			Memory.segments =
-			{
-				version: this.version,
-				metadata: {},
-				buffer: {},
-			};
+		if (root.memory === undefined || root.memory.version !== this.version)
+			this.reinitMemory();
 
 		// clearing deleted cache
 		_.forOwn(this.cache, (e, key) =>
 		{
 			const id = Number(key);
-			const metadata = this.memory.metadata[id];
+			const metadata = root.memory.metadata[id];
 			if (metadata === undefined)
 				delete this.cache[id];
 			else
 				e.metadata = metadata;
 		});
-  
+
 		// if buffer is in cache, clear buffer, otherwise upload
-		_.forOwn(this.memory.buffer, (buffer, key) =>
+		_.forOwn(root.memory.buffer, (buffer, key) =>
 		{
 			if (buffer === undefined)
 				return;
 
 			const id = Number(key);
 
-			const metadata = this.memory.metadata[id];
+			const metadata = root.memory.metadata[id];
 			// metadata can never be undefined, see afterTick()
 
 			const cache = this.cache[id];
@@ -138,7 +144,7 @@ export class SegmentBuffer
 				if (metadata.locked === 1)
 					metadata.lockedCount++;
 				else
-					delete this.memory.buffer[id];
+					delete root.memory.buffer[id];
 			}
 		});
 	}
@@ -171,7 +177,7 @@ export class SegmentBuffer
 
 			if (writeFailed || cache.metadata.locked === 1)
 			{
-				this.memory.buffer[id] =
+				root.memory.buffer[id] =
 				{
 					d: cache.d,
 					version: cache.version,
@@ -187,7 +193,7 @@ export class SegmentBuffer
 
 	private getOrCreateMetadata(id: number)
 	{
-		let metadata = this.memory.metadata[id];
+		let metadata = root.memory.metadata[id];
 		if (metadata === undefined)
 		{
 			metadata =
@@ -206,14 +212,14 @@ export class SegmentBuffer
 				getCount: 0,
 				lockedCount: 0,
 			};
-			this.memory.metadata[id] = metadata;
+			root.memory.metadata[id] = metadata;
 		}
 		return metadata;
 	}
 
 	public lock(id: number): boolean
 	{
-		const metadata = this.memory.metadata[id];
+		const metadata = root.memory.metadata[id];
 		if (metadata === undefined)
 			return false;
 		metadata.locked = 1;
@@ -222,20 +228,20 @@ export class SegmentBuffer
 
 	public unlock(id: number): void
 	{
-		const metadata = this.memory.metadata[id];
+		const metadata = root.memory.metadata[id];
 		if (metadata !== undefined)
 			metadata.locked = undefined;
 	}
 
 	public isLocked(id: number): boolean
 	{
-		const metadata = this.memory.metadata[id];
+		const metadata = root.memory.metadata[id];
 		return metadata !== undefined && metadata.locked === 1;
 	}
 
 	public get(id: number): { status: eSegmentBufferStatus, data?: string }
 	{
-		const metadata = this.memory.metadata[id];
+		const metadata = root.memory.metadata[id];
 		if (metadata === undefined)
 			return { status: eSegmentBufferStatus.Empty };
 
@@ -262,7 +268,7 @@ export class SegmentBuffer
 			this.cache[id] = entry;
 
 			// buffer is saved for updating other runtimes
-			this.memory.buffer[id] =
+			root.memory.buffer[id] =
 			{
 				d: entry.d,
 				version: entry.version,
@@ -309,8 +315,8 @@ export class SegmentBuffer
 		// this tick get will fail because of empty cache
 		// next tick/other runtimes cache will be cleared/not restored because of empty metadata
 		delete this.cache[id];
-		delete this.memory.buffer[id];
-		delete this.memory.metadata[id];
+		delete root.memory.buffer[id];
+		delete root.memory.metadata[id];
 	}
 
 	public visualize(scale: number)
@@ -364,14 +370,14 @@ export class SegmentBuffer
 				cell.setCell(states.inCacheVersion.pos, states.inCacheVersion.cell(`${cache.version}`));
 			}
 
-			const buffer = this.memory.buffer[id];
+			const buffer = root.memory.buffer[id];
 			if (buffer !== undefined)
 			{
 				cell.setCell(states.inBuffer.pos, states.inBuffer.cell());
 				cell.setCell(states.inBufferVersion.pos, states.inBufferVersion.cell(`${buffer.version}`));
 			}
 
-			const md = this.memory.metadata[id];
+			const md = root.memory.metadata[id];
 			if (md !== undefined)
 			{
 				cell.setCell(states.savedVersion.pos, states.savedVersion.cell(`${md.savedVersion}`));
@@ -381,6 +387,12 @@ export class SegmentBuffer
 
 		grid.box = { x: () => - 0.5, y: () => - 0.5, w: () => 50, h: () => grid.rows * 2 * scale };
 		grid.draw(new RoomVisual());
+	}
+
+	public forgetAll()
+	{
+		this.reinitMemory();
+		this.cache = {};
 	}
 }
 
