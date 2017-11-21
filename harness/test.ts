@@ -11,6 +11,7 @@ export interface IScreepsTestMemory extends IScreepsTestProfilerMemory
 	runSeq: { [id: string]: { index: number, repeat: number } };
 	runAll: { [id: string]: { all: Array<0 | 1>, done?: 1 } };
 	asserts: { [line: string]: { s: number, f: number, l: string, c?: string, v?: string } };
+	yield: { [id: string]: number | undefined; };
 }
 
 export interface ITestHarnessMemory
@@ -101,6 +102,7 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 				runSeq: {},
 				runAll: {},
 				asserts: {},
+				yield: {},
 			};
 		}
 	}
@@ -165,6 +167,22 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 			this.m.runOnce[id] = 1;
 
 		return this.m.runOnce[id] === 1;
+	}
+
+	protected delayFinish(ticks: number, cb: () => boolean)
+	{
+		const id = this.sourceMap.getFileLine(1, false).final;
+
+		const finished = this.m.yield[id];
+		if (finished === undefined)
+		{
+			const res = cb();
+			if (!res)
+				return false;
+			this.m.yield[id] = Game.time;
+			return ticks <= 0;
+		}
+		return Game.time - finished >= ticks;
 	}
 
 	protected runSequence(times: number, cb: Array<(iteration: number) => boolean>): boolean
@@ -248,12 +266,12 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 
 	protected assertEqual<T>(expression: T, test: T, comment?: string): void
 	{
-		this._assert(expression === test, comment, () => `expected ${JSON.stringify(test)} got ${JSON.stringify(expression)}`);
+		this._assert(expression === test, comment, () => `expected '${JSON.stringify(test)}' got '${JSON.stringify(expression)}'`);
 	}
 
 	protected assertNotEqual<T>(expression: T, test: T, comment?: string): void
 	{
-		this._assert(expression !== test, comment, () => `expected ${JSON.stringify(test)} got ${JSON.stringify(expression)}`);
+		this._assert(expression !== test, comment, () => `unexpectedly got '${JSON.stringify(expression)}'`);
 	}
 
 	public report()

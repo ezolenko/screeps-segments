@@ -1,3 +1,4 @@
+//import { tracker } from '../src/runtime.tracker';
 import { TestDefinition } from "../harness/runner";
 import { ScreepsTest } from "../harness/test";
 import { SegmentBuffer, eSegmentBufferStatus } from "../lib/lib";
@@ -17,31 +18,27 @@ export class SegmentsBufferTest extends ScreepsTest<{}>
 		super.beforeTick();
 
 		this.profileInstance(this.buffer, SegmentBuffer.name);
-
-		this.buffer.beforeTick();
 	}
 
 	public afterTick()
 	{
 		this.buffer.visualize(3);
-		this.buffer.afterTick();
 
 		super.afterTick();
 	}
 
+	// tslint:disable:no-string-literal
 	public run(): boolean
 	{
-		return this.runSequence(3,
-		[
-			() => this.oneTickAssignment(),
-		]);
-	}
+		this.buffer.beforeTick();
 
-	// tslint:disable:no-string-literal
-	private oneTickAssignment(): boolean
-	{
-		return this.runSequence(1,
+		const id = 13;
+
+		let onAfterTick: (() => void) | undefined;
+
+		const res = this.runSequence(5,
 		[
+			// cleanup
 			(iteration) =>
 			{
 				if (iteration === 0)
@@ -51,57 +48,81 @@ export class SegmentsBufferTest extends ScreepsTest<{}>
 				}
 				return true;
 			},
+			// first set
 			(iteration) =>
 			{
-				logger.error(`oneTickAssignment iteration: ${iteration}`);
+				return this.delayFinish(1, () =>
+				{
+					const data = `${id}${iteration}`;
 
-				const id = 13;
+					this.buffer.set(id, data);
+
+					this.assertEqual(this.buffer["cache"][id].d, data);
+					this.assertEqual(this.buffer["cache"][id].version, 0);
+					this.assertEqual(this.buffer["cache"][id].metadata.lastRead, -1);
+					this.assertEqual(this.buffer["memory"].metadata[id], this.buffer["cache"][id].metadata);
+					this.assertEqual(this.buffer["memory"].version, this.buffer["version"]);
+
+					onAfterTick = () =>
+					{
+						const buffer = this.buffer["memory"].buffer[id];
+						this.assertEqual(buffer, undefined);
+					};
+
+					return true;
+				});
+			},
+			(iteration) =>
+			{
+				//const nodeSwitched = tracker.switchedNodes;
+
 				const data = `${id}${iteration}`;
 
-				this.buffer.set(id, data);
-
-				this.assertEqual(this.buffer["cache"][id].d, data);
-				this.assertEqual(this.buffer["cache"][id].version, iteration);
-				this.assertEqual(this.buffer["cache"][id].metadata.lastRead, iteration === 0 ? -1 : Game.time);
-
 				const segment = this.buffer.get(id);
+
+				this.assertNotEqual(segment.status, eSegmentBufferStatus.Empty);
+
+				if (segment.status !== eSegmentBufferStatus.Ready)
+				{
+					this.assertEqual(segment.status, eSegmentBufferStatus.NextTick);
+					return false;
+				}
 
 				this.assertEqual(segment.status, eSegmentBufferStatus.Ready);
 				this.assertEqual(segment.data, data);
 
-				this.assertEqual(this.buffer["cache"][id].d, data);
-				this.assertEqual(this.buffer["cache"][id].version, iteration);
-				this.assertEqual(this.buffer["cache"][id].metadata.cacheMiss, 0);
-				this.assertEqual(this.buffer["cache"][id].metadata.getCount, iteration + 1);
-				this.assertEqual(this.buffer["cache"][id].metadata.lastRead, iteration === 0 ? -1 : Game.time);
-				this.assertEqual(this.buffer["cache"][id].metadata.lastReadRequest, iteration === 0 ? -1 : Game.time);
-				this.assertEqual(this.buffer["cache"][id].metadata.lastWrite, iteration === 0 ? -1 : Game.time);
-				this.assertEqual(this.buffer["cache"][id].metadata.lastWriteRequest, iteration === 0 ? -1 : Game.time);
-				this.assertEqual(this.buffer["cache"][id].metadata.locked, undefined);
-				this.assertEqual(this.buffer["cache"][id].metadata.lockedCount, 0);
-				this.assertEqual(this.buffer["cache"][id].metadata.readCount, iteration);
-				this.assertEqual(this.buffer["cache"][id].metadata.readRequestCount, iteration);
-				this.assertEqual(this.buffer["cache"][id].metadata.savedVersion, iteration === 0 ? -1 : iteration);
-				this.assertEqual(this.buffer["cache"][id].metadata.setCount, iteration + 1);
-				this.assertEqual(this.buffer["cache"][id].metadata.writeCount, iteration);
-				this.assertEqual(this.buffer["cache"][id].metadata.writeRequestCount, iteration);
+				const cache = this.buffer["cache"][id];
+				this.assertNotEqual(cache, undefined);
 
-				this.assertEqual(this.buffer["memory"].version, this.buffer["version"]);
-				this.assertEqual(this.buffer["memory"].metadata[id], this.buffer["cache"][id].metadata);
-
-				const buffer = this.buffer["memory"].buffer[id];
-				this.assertNotEqual(buffer, undefined);
-				if (buffer !== undefined)
+				if (cache !== undefined)
 				{
-					this.assertEqual(buffer.version, iteration);
+					this.assertEqual(cache.d, data);
+					this.assertEqual(cache.version, 0);
+					this.assertEqual(cache.metadata.cacheMiss, 2);
+					this.assertEqual(cache.metadata.getCount, 2);
+					this.assertEqual(cache.metadata.lastRead, Game.time);
+					this.assertEqual(cache.metadata.lastReadRequest, Game.time - 1);
+					this.assertEqual(cache.metadata.lastWrite, Game.time - 2);
+					this.assertEqual(cache.metadata.lastWriteRequest, -1);
+					this.assertEqual(cache.metadata.locked, undefined);
+					this.assertEqual(cache.metadata.lockedCount, 0);
+					this.assertEqual(cache.metadata.readCount, 1);
+					this.assertEqual(cache.metadata.readRequestCount, 1);
+					this.assertEqual(cache.metadata.savedVersion, 0);
+					this.assertEqual(cache.metadata.setCount, 1);
+					this.assertEqual(cache.metadata.writeCount, 1);
+					this.assertEqual(cache.metadata.writeRequestCount, 0);
 				}
 
 				return true;
 			},
-			(_iteration) =>
-			{
-				return true;
-			},
 		]);
+
+		this.buffer.afterTick();
+
+		if (onAfterTick !== undefined)
+			onAfterTick();
+
+		return res;
 	}
 }
