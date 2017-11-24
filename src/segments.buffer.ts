@@ -112,7 +112,7 @@ export class SegmentBuffer
 			this.reinitMemory();
 
 		if (root.memory.initTick !== this.cache.initTick)
-			this.cache = { initTick: Game.time, c: {} };
+			this.cache = { initTick: root.memory.initTick, c: {} };
 		else
 		{
 			// clearing marked entries
@@ -170,7 +170,7 @@ export class SegmentBuffer
 	{
 		// if cache is newer than saved, try saving
 		// if rejected, copy to buffer
-		_.forOwn(this.cache, (cache, key) =>
+		_.forOwn(this.cache.c, (cache, key) =>
 		{
 			if (cache.version <= cache.metadata.savedVersion)
 				return;

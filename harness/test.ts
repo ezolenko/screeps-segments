@@ -182,7 +182,12 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 			this.m.yield[id] = Game.time;
 			return ticks <= 0;
 		}
-		return Game.time - finished >= ticks;
+		else if (Game.time - finished >= ticks)
+		{
+			this.m.yield[id] = undefined;
+			return true;
+		}
+		return false;
 	}
 
 	protected runSequence(times: number, cb: Array<(iteration: number) => boolean>): boolean
