@@ -36,10 +36,10 @@ export interface ISegmentsBufferEntry
 export interface ISegmentBuffer
 {
 	version: number;
+	initTick: number;
 	metadata: { [id: string]: ISegmentMetadata };
 	buffer: { [id: string]: ISegmentsBufferEntry };
 	clearCache: { [nodeId: string]: { [id: string]: 1 | undefined } | undefined };
-	initTick: number;
 }
 
 declare global

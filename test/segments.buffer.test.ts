@@ -57,10 +57,10 @@ export class SegmentsBufferTest extends ScreepsTest<{}>
 
 					this.buffer.set(id, data);
 
-					this.assertEqual(this.buffer["cache"][id].d, data);
-					this.assertEqual(this.buffer["cache"][id].version, 0);
-					this.assertEqual(this.buffer["cache"][id].metadata.lastRead, -1);
-					this.assertEqual(this.buffer["memory"].metadata[id], this.buffer["cache"][id].metadata);
+					this.assertEqual(this.buffer["cache"].c[id].d, data);
+					this.assertEqual(this.buffer["cache"].c[id].version, 0);
+					this.assertEqual(this.buffer["cache"].c[id].metadata.lastRead, -1);
+					this.assertEqual(this.buffer["memory"].metadata[id], this.buffer["cache"].c[id].metadata);
 					this.assertEqual(this.buffer["memory"].version, this.buffer["version"]);
 
 					onAfterTick = () =>
@@ -91,7 +91,7 @@ export class SegmentsBufferTest extends ScreepsTest<{}>
 				this.assertEqual(segment.status, eSegmentBufferStatus.Ready);
 				this.assertEqual(segment.data, data);
 
-				const cache = this.buffer["cache"][id];
+				const cache = this.buffer["cache"].c[id];
 				this.assertNotEqual(cache, undefined);
 
 				if (cache !== undefined)
