@@ -66,16 +66,17 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 
 					this.assertEqual(this.buffer["cache"].c[id].d, data);
 					this.assertEqual(this.buffer["cache"].c[id].version, iteration);
-					this.assertEqual(this.buffer["cache"].c[id].metadata.lastRead, -1);
+					this.assertEqual(this.buffer["cache"].c[id].metadata.lastRead, iteration === 0 ? -1 : Game.time);
 					this.assertEqual(this.buffer["memory"].metadata[id], this.buffer["cache"].c[id].metadata);
-					this.assertEqual(this.buffer["memory"].metadata[id].setCount, 1);
+					this.assertEqual(this.buffer["memory"].metadata[id].setCount, iteration + 1);
 					this.assertEqual(this.buffer["memory"].version, this.buffer["version"]);
 					this.assertEqual(this.buffer["cache"].initTick, this.memory.lastCacheInitTick);
 
 					onAfterTick = () =>
 					{
 						const buffer = this.buffer["memory"].buffer[id];
-						this.assertEqual(buffer, undefined);
+						if (iteration === 0)
+							this.assertEqual(buffer, undefined);
 					};
 
 					return true;
@@ -111,19 +112,19 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 				{
 					this.assertEqual(cache.d, data);
 					this.assertEqual(cache.version, iteration);
-					this.assertEqual(cache.metadata.cacheMiss, 2);
-					this.assertEqual(cache.metadata.getCount, 2);
+					this.assertEqual(cache.metadata.cacheMiss, 2 * (iteration + 1));
+					this.assertEqual(cache.metadata.getCount, 2 * (iteration + 1));
 					this.assertEqual(cache.metadata.lastRead, Game.time);
 					this.assertEqual(cache.metadata.lastReadRequest, Game.time - 1);
 					this.assertEqual(cache.metadata.lastWrite, Game.time - 2);
 					this.assertEqual(cache.metadata.lastWriteRequest, -1);
 					this.assertEqual(cache.metadata.locked, undefined);
 					this.assertEqual(cache.metadata.lockedCount, 0);
-					this.assertEqual(cache.metadata.readCount, 1);
-					this.assertEqual(cache.metadata.readRequestCount, 1);
+					this.assertEqual(cache.metadata.readCount, iteration + 1);
+					this.assertEqual(cache.metadata.readRequestCount, iteration + 1);
 					this.assertEqual(cache.metadata.savedVersion, iteration);
-					this.assertEqual(cache.metadata.setCount, 1);
-					this.assertEqual(cache.metadata.writeCount, 1);
+					this.assertEqual(cache.metadata.setCount, iteration + 1);
+					this.assertEqual(cache.metadata.writeCount, iteration + 1);
 					this.assertEqual(cache.metadata.writeRequestCount, 0);
 				}
 
