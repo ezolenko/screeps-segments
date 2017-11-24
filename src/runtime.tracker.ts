@@ -38,7 +38,10 @@ export class RuntimeTracker
 	public get isLoadTick() { return root.memory.nodes[this.currentNodeId].totalReuse === 1; }
 	public get currentNodeId() { return currentNodeId; }
 	public get switchedNodes() { return root.memory.lastNode !== this.currentNodeId; }
-	public isActive(nodeId: string) { return _.has(root.memory.nodes, nodeId); }
+	public isActive(nodeId: string) { return _.has(this._activeNodes, nodeId); }
+
+	private _activeNodes: { [id: string]: IRuntimeNode } = {};
+	public get activeNodes(): { [id: string]: IRuntimeNode } { return this._activeNodes; }
 
 	private get memory() { return root.memory; }
 
@@ -89,9 +92,11 @@ export class RuntimeTracker
 					delete root.memory.nodes[key];
 			});
 		}
+
+		this._activeNodes = this.getActiveNodes();
 	}
 
-	private activeNodes()
+	private getActiveNodes(): { [id: string]: IRuntimeNode }
 	{
 		const nodes: Array<{ id: string, node: IRuntimeNode, diff: number, p: number }> = _
 			.map(root.memory.nodes, (node, id) =>
@@ -113,7 +118,7 @@ export class RuntimeTracker
 
 	public report(): string
 	{
-		const active = this.activeNodes();
+		const active = this.getActiveNodes();
 
 		return `T: ${Game.time}, last id: ${root.memory.lastNode}, ${this.switchedNodes ? "switched" : "same node"}\n\t` + _.map(root.memory.nodes, (node, key) =>
 		{

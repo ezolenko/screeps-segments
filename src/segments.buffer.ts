@@ -1,3 +1,4 @@
+import { tracker } from "./runtime.tracker";
 import { SegmentsBasicWrapper } from "./segments.basic.wrapper";
 import { Grid, Circle, Text } from "./segment.visualizer";
 import { ILogger } from "./ilogger";
@@ -37,6 +38,8 @@ export interface ISegmentBuffer
 	version: number;
 	metadata: { [id: string]: ISegmentMetadata };
 	buffer: { [id: string]: ISegmentsBufferEntry };
+	clearCache: { [nodeId: string]: { [id: string]: 1 | undefined } | undefined };
+	initTick: number;
 }
 
 declare global
@@ -56,7 +59,8 @@ export interface ISegmentsCacheEntry
 
 export interface ISegmentsCache
 {
-	[id: string]: ISegmentsCacheEntry;
+	initTick: number;
+	c: { [id: string]: ISegmentsCacheEntry };
 }
 
 export enum eSegmentBufferStatus
@@ -79,7 +83,7 @@ export class SegmentBuffer
 	private s: SegmentsBasicWrapper;
 	private version = 2;
 	private clearDelay = 3;
-	private cache: ISegmentsCache = {};
+	private cache: ISegmentsCache = { initTick: Game.time, c: {} };
 
 	private get memory() { return root.memory; }
 
@@ -95,25 +99,38 @@ export class SegmentBuffer
 			version: this.version,
 			metadata: {},
 			buffer: {},
+			clearCache: {},
+			initTick: Game.time,
 		};
 	}
 
 	public beforeTick()
 	{
 		this.s.beforeTick();
+
 		if (root.memory === undefined || root.memory.version !== this.version)
 			this.reinitMemory();
 
-		// clearing deleted cache
-		_.forOwn(this.cache, (e, key) =>
+		if (root.memory.initTick !== this.cache.initTick)
+			this.cache = { initTick: Game.time, c: {} };
+		else
 		{
-			const id = Number(key);
-			const metadata = root.memory.metadata[id];
-			if (metadata === undefined)
-				delete this.cache[id];
-			else
-				e.metadata = metadata;
-		});
+			// clearing marked entries
+			const clear = root.memory.clearCache[tracker.currentNodeId];
+			_.forOwn(clear!, (_e, key) => delete this.cache.c[key!]);
+			root.memory.clearCache[tracker.currentNodeId] = undefined;
+
+			// clearing deleted cache or updating metadata reference
+			_.forOwn(this.cache, (e, key) =>
+			{
+				const id = Number(key);
+				const metadata = root.memory.metadata[id];
+				if (metadata === undefined)
+					delete this.cache.c[id];
+				else
+					e.metadata = metadata;
+			});
+		}
 
 		// if buffer is in cache, clear buffer, otherwise upload
 		_.forOwn(root.memory.buffer, (buffer, key) =>
@@ -126,10 +143,10 @@ export class SegmentBuffer
 			const metadata = root.memory.metadata[id];
 			// metadata can never be undefined, see afterTick()
 
-			const cache = this.cache[id];
+			const cache = this.cache.c[id];
 			if (cache === undefined || cache.version < buffer.version)
 			{
-				this.cache[id] =
+				this.cache.c[id] =
 				{
 					d: buffer.d,
 					metadata,
@@ -247,7 +264,7 @@ export class SegmentBuffer
 
 		metadata.getCount++;
 
-		const cache = this.cache[id];
+		const cache = this.cache.c[id];
 		if (cache !== undefined && cache.version >= metadata.savedVersion)
 			return { status: eSegmentBufferStatus.Ready, data: cache.d };
 
@@ -265,7 +282,7 @@ export class SegmentBuffer
 				metadata,
 				version: metadata.savedVersion,
 			};
-			this.cache[id] = entry;
+			this.cache.c[id] = entry;
 
 			// buffer is saved for updating other runtimes
 			root.memory.buffer[id] =
@@ -293,7 +310,7 @@ export class SegmentBuffer
 		metadata.setCount++;
 
 		// updating cached version if exists
-		const cache = this.cache[id];
+		const cache = this.cache.c[id];
 		if (cache !== undefined)
 		{
 			cache.d = data;
@@ -302,7 +319,7 @@ export class SegmentBuffer
 		}
 
 		// new cached version
-		this.cache[id] =
+		this.cache.c[id] =
 		{
 			d: data,
 			version: 0,
@@ -314,9 +331,20 @@ export class SegmentBuffer
 	{
 		// this tick get will fail because of empty cache
 		// next tick/other runtimes cache will be cleared/not restored because of empty metadata
-		delete this.cache[id];
+		delete this.cache.c[id];
 		delete root.memory.buffer[id];
 		delete root.memory.metadata[id];
+
+		const nodes = tracker.activeNodes;
+		_.keys(nodes).forEach((nodeId) =>
+		{
+			if (nodeId === tracker.currentNodeId)
+				return;
+			if (root.memory.clearCache[nodeId] === undefined)
+				root.memory.clearCache[nodeId] = { [id]: 1 };
+			else
+				root.memory.clearCache[nodeId]![id] = 1;
+		});
 	}
 
 	public visualize(scale: number)
@@ -363,7 +391,7 @@ export class SegmentBuffer
 		{
 			const cell = grid.getCellByIndex(id) as Grid;
 
-			const cache = this.cache[id];
+			const cache = this.cache.c[id];
 			if (cache !== undefined)
 			{
 				cell.setCell(states.inCache.pos, states.inCache.cell());
@@ -392,7 +420,7 @@ export class SegmentBuffer
 	public forgetAll()
 	{
 		this.reinitMemory();
-		this.cache = {};
+		this.cache = { initTick: Game.time, c: {} };
 	}
 }
 
