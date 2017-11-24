@@ -37,7 +37,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 
 		let onAfterTick: (() => void) | undefined;
 
-		const res = this.runSequence(2,
+		const res = this.runSequence(20,
 		[
 			// cleanup
 			(iteration) =>
