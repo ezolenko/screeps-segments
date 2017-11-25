@@ -29,15 +29,11 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 	}
 
 	// tslint:disable:no-string-literal
-	public run(): boolean
+	private runSetGet(out: { onAfterTick?: (() => void) | undefined }): boolean
 	{
-		this.buffer.beforeTick();
-
 		const id = 13;
 
-		let onAfterTick: (() => void) | undefined;
-
-		const res = this.runSequence(20,
+		return this.runSequence(5,
 		[
 			// cleanup
 			(iteration) =>
@@ -72,7 +68,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 					this.assertEqual(this.buffer["memory"].version, this.buffer["version"]);
 					this.assertEqual(this.buffer["cache"].initTick, this.memory.lastCacheInitTick);
 
-					onAfterTick = () =>
+					out.onAfterTick = () =>
 					{
 						const buffer = this.buffer["memory"].buffer[id];
 						if (iteration === 0)
@@ -131,11 +127,44 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 				return true;
 			},
 		]);
+	}
+
+	private runSetGetClear(out: { onAfterTick?: (() => void) | undefined }): boolean
+	{
+		const id = 14;
+
+		return this.runSequence(1,
+		[
+			// cleanup
+			(iteration) =>
+			{
+				if (iteration === 0)
+				{
+					logger.error(`cleanup`);
+					this.buffer.forgetAll();
+					this.memory.lastCacheInitTick = Game.time;
+				}
+				return true;
+			},
+		]);
+	}
+
+	public run(): boolean
+	{
+		this.buffer.beforeTick();
+
+		const out: { onAfterTick?: (() => void) } = {};
+
+		const res = this.runSequence(1,
+		[
+			() => this.runSetGet(out),
+			() => this.runSetGetClear(out),
+		]);
 
 		this.buffer.afterTick();
 
-		if (onAfterTick !== undefined)
-			onAfterTick();
+		if (out.onAfterTick !== undefined)
+			out.onAfterTick();
 
 		return res;
 	}
