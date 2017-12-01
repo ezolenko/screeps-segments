@@ -146,6 +146,64 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 				}
 				return true;
 			},
+			(iteration) =>
+			{
+				return this.delayFinish(1, () =>
+				{
+					const data = `${id}${iteration}`;
+
+					logger.error(`${Game.time} setting data to '${data}'`);
+
+					this.buffer.set(id, data);
+
+					const result = this.buffer.get(id);
+					this.assertEqual(result.status, eSegmentBufferStatus.Ready);
+					this.assertEqual(result.data, data);
+
+					out.onAfterTick = () =>
+					{
+						const buffer = this.buffer["memory"].buffer[id];
+						if (iteration === 0)
+							this.assertEqual(buffer, undefined);
+					};
+
+					return true;
+				});
+			},
+			() =>
+			{
+				return this.delayFinish(1, () =>
+				{
+					this.buffer.clear(id);
+
+					const cache = this.buffer["cache"].c[id];
+					this.assertEqual(cache, undefined);
+
+					const result = this.buffer.get(id);
+					this.assertEqual(result.status, eSegmentBufferStatus.Empty);
+
+					return true;
+				});
+			},
+			() =>
+			{
+				return this.runSequence(10,
+				[
+					() =>
+					{
+						return this.delayFinish(1, () =>
+						{
+							const cache = this.buffer["cache"].c[id];
+							this.assertEqual(cache, undefined);
+
+							const result = this.buffer.get(id);
+							this.assertEqual(result.status, eSegmentBufferStatus.Empty);
+
+							return true;
+						});
+					},
+				]);
+			},
 		]);
 	}
 
