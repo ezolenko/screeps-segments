@@ -212,7 +212,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 		]);
 	}
 
-	private loadTesting(out: { onAfterTick?: (() => void) | undefined }): boolean
+	private loadTesting(_out: { onAfterTick?: (() => void) | undefined }): boolean
 	{
 		const loadFactor = 30;
 		return this.runSequence(10,
