@@ -7,6 +7,11 @@ import { logger } from "../harness/logger";
 export interface ISegmentsBufferTestMemory
 {
 	lastCacheInitTick: number;
+	load:
+	{
+		usedSegments: number[];
+		readSegments: { [id: number]: 1 | undefined };
+	};
 }
 
 @TestDefinition(0)
@@ -207,6 +212,60 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 		]);
 	}
 
+	private loadTesting(out: { onAfterTick?: (() => void) | undefined }): boolean
+	{
+		const loadFactor = 30;
+		return this.runSequence(10,
+		[
+			() =>
+			{
+				return this.delayFinish(3, () =>
+				{
+					// 30 random segments
+					this.memory.load.usedSegments = _.shuffle(_.range(0, 99, 1)).slice(0, loadFactor);
+					this.memory.load.readSegments = {};
+
+					this.memory.load.usedSegments.forEach((id) =>
+					{
+						const data = `${id}data`;
+						this.buffer.set(id, data);
+					});
+
+					this.memory.load.usedSegments.forEach((id) =>
+					{
+						const expectedData = `${id}data`;
+
+						const result = this.buffer.get(id);
+
+						this.assertEqual(result.status, eSegmentBufferStatus.Ready);
+						this.assertEqual(result.data, expectedData);
+					});
+
+					return true;
+				});
+			},
+			() =>
+			{
+				this.memory.load.usedSegments.forEach((id) =>
+				{
+					const expectedData = `${id}data`;
+
+					const result = this.buffer.get(id);
+
+					if (result.status === eSegmentBufferStatus.Ready)
+					{
+						this.assertEqual(result.data, expectedData);
+						this.memory.load.readSegments[id] = 1;
+					}
+
+					this.assertNotEqual(result.status, eSegmentBufferStatus.Empty);
+				});
+
+				return _.sum(this.memory.load.readSegments) === loadFactor;
+			},
+		]);
+	}
+
 	public run(): boolean
 	{
 		this.buffer.beforeTick();
@@ -217,6 +276,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 		[
 			() => this.runSetGet(out),
 			() => this.runSetGetClear(out),
+			() => this.loadTesting(out),
 		]);
 
 		this.buffer.afterTick();
