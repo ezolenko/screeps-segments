@@ -222,7 +222,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 				return this.delayFinish(3, () =>
 				{
 					// 30 random segments
-					this.memory.load.usedSegments = _.shuffle(_.range(0, 99, 1)).slice(0, loadFactor);
+					this.memory.load.usedSegments = _.shuffle(_.range(0, 99)).slice(0, loadFactor);
 					this.memory.load.readSegments = {};
 
 					this.memory.load.usedSegments.forEach((id) =>
