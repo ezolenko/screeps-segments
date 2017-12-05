@@ -222,6 +222,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 			{
 				return this.delayFinish(3, () =>
 				{
+					logger.error(`writing ${loadFactor} segments`);
 					// 30 random segments
 					this.memory.load.usedSegments = _.shuffle(_.range(0, 99)).slice(0, loadFactor);
 					this.memory.load.readSegments = {};
@@ -253,6 +254,8 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 
 					const result = this.buffer.get(id);
 
+					logger.error(`reading ${id}, status: ${result.status}`);
+
 					if (result.status === eSegmentBufferStatus.Ready)
 					{
 						this.assertEqual(result.data, expectedData);
@@ -261,6 +264,8 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 
 					this.assertNotEqual(result.status, eSegmentBufferStatus.Empty);
 				});
+
+				logger.error(`reading ${loadFactor} segments, read so far: ${_.sum(this.memory.load.readSegments)}`);
 
 				return _.sum(this.memory.load.readSegments) === loadFactor;
 			},

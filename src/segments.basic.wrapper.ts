@@ -1,4 +1,4 @@
-import { Circle, Grid, Rect, Text } from "./segment.visualizer";
+import { Grid, Text } from "./segment.visualizer";
 import { ILogger } from "./ilogger";
 
 export class SegmentsBasicWrapper
@@ -123,27 +123,32 @@ export class SegmentsBasicWrapper
 		{
 			readRequested:
 			{
-				cell: () => new Circle({ fill: "blue", stroke: "black", strokeWidth: 0.1 }),
+				cell: () =>	new Text("r", { color: "blue" }),
+				// cell: () => new Circle({ fill: "blue", stroke: "black", strokeWidth: 0.1 }),
 				pos: { column: 0, row: 0 },
 			},
 			willRead:
 			{
-				cell: () => new Rect({ fill: "blue", stroke: "black", strokeWidth: 0.1 }),
+				cell: () =>	new Text("R", { color: "blue" }),
+				// cell: () => new Rect({ fill: "blue", stroke: "black", strokeWidth: 0.1 }),
 				pos: { column: 0, row: 1 },
 			},
 			writeRequested:
 			{
-				cell: () => new Circle({ fill: "green", stroke: "black", strokeWidth: 0.1 }),
+				cell: () =>	new Text("w", { color: "green" }),
+				// cell: () => new Circle({ fill: "green", stroke: "black", strokeWidth: 0.1 }),
 				pos: { column: 2, row: 0 },
 			},
 			willWrite:
 			{
-				cell: () => new Rect({ fill: "green", stroke: "black", strokeWidth: 0.1 }),
+				cell: () =>	new Text("W", { color: "green" }),
+				// cell: () => new Rect({ fill: "green", stroke: "black", strokeWidth: 0.1 }),
 				pos: { column: 2, row: 1 },
 			},
 			available:
 			{
-				cell: () => new Rect({ fill: "yellow", stroke: "black", strokeWidth: 0.1 }),
+				cell: () =>	new Text("A", { color: "green" }),
+				// cell: () => new Rect({ fill: "yellow", stroke: "black", strokeWidth: 0.1 }),
 				pos: { column: 1, row: 0 },
 			},
 		};

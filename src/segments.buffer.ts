@@ -353,12 +353,12 @@ export class SegmentBuffer
 		{
 			inCache:
 			{
-				cell: () => new Circle({ fill: "blue" }),
+				cell: () => new Text("B", { color: "blue" }),
 				pos: { column: 2, row: 2 },
 			},
 			inBuffer:
 			{
-				cell: () => new Circle({ fill: "red" }),
+				cell: () => new Text("C", { color: "red" }),
 				pos: { column: 1, row: 2 },
 			},
 
