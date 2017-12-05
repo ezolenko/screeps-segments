@@ -1,6 +1,6 @@
 import { tracker } from "./runtime.tracker";
 import { SegmentsBasicWrapper } from "./segments.basic.wrapper";
-import { Grid, Circle, Text } from "./segment.visualizer";
+import { Grid, Text } from "./segment.visualizer";
 import { ILogger } from "./ilogger";
 import { IMemoryRoot } from "./memory.root";
 

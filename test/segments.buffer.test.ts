@@ -214,7 +214,8 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 
 	private loadTesting(_out: { onAfterTick?: (() => void) | undefined }): boolean
 	{
-		this.memory.load = { usedSegments: [], readSegments: {} };
+		if (this.memory.load === undefined)
+			this.memory.load = { usedSegments: [], readSegments: {} };
 		const loadFactor = 30;
 		return this.runSequence(10,
 		[
