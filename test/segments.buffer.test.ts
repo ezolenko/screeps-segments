@@ -270,6 +270,16 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 
 				return _.sum(this.memory.load.readSegments) === loadFactor;
 			},
+			() => this.delayFinish(10, () => true),
+			() =>
+			{
+				this.memory.load.usedSegments.forEach((id) =>
+				{
+					this.assertEqual(this.buffer["memory"].buffer[id], undefined);
+				});
+
+				return true;
+			},
 		]);
 	}
 
