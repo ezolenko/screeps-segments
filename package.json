@@ -13,16 +13,15 @@
     "upload-test-ptr": "rollup -c rollup.config.test.js --screeps .screeps.config.ptr.json",
     "upload-test-s+": "rollup -c rollup.config.test.js --screeps .screeps.config.s+.json"
   },
-  "author": "",
+  "author": "@ezolenko",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^7.0.13",
     "@types/source-map": "^0.5.1",
     "@types/lodash": "^3.10.2",
     "@types/fs-extra": "^4.0.3",
-    "screeps-api": "1.3.1",
-    "source-map": "0.5.7",
-    "rollup": "^0.51.3",
+    "source-map": "0.6.1",
+    "rollup": "^0.52.0",
     "rollup-plugin-screeps-upload": "git+https://github.com/ezolenko/rollup-plugin-screeps-upload#master",
     "rollup-plugin-cleanup": "1.0.1",
     "rollup-plugin-commonjs": "^8.2.1",
@@ -34,7 +33,7 @@
     "rollup-plugin-typescript2": "^0.8.4",
     "tslib": "^1.8.0",
     "tslint": "5.8.0",
-    "typescript": "^2.6.1",
+    "typescript": "^2.6.2",
     "typings": "2.1.1",
     "git-rev-sync": "git+https://github.com/ezolenko/git-rev-sync-js#master",
     "fs-extra": "^4.0.2"
