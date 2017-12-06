@@ -21,9 +21,6 @@ export interface ISegmentMetadata
 	writeRequestCount: number;
 	setCount: number;
 	getCount: number;
-
-	locked?: 1;
-	lockedCount: number;
 }
 
 export interface ISegmentsBufferEntry
@@ -160,10 +157,7 @@ export class SegmentBuffer
 			// if buffer is already saved, but wasn't read for a while, clear
 			if (metadata.savedVersion === buffer.version && buffer.lastRead >= 0 && Game.time - buffer.lastRead > this.clearDelay)
 			{
-				if (metadata.locked === 1)
-					metadata.lockedCount++;
-				else
-					delete root.memory.buffer[id];
+				delete root.memory.buffer[id];
 			}
 		});
 	}
@@ -194,7 +188,7 @@ export class SegmentBuffer
 				writeFailed = true;
 			}
 
-			if (writeFailed || cache.metadata.locked === 1)
+			if (writeFailed)
 			{
 				root.memory.buffer[id] =
 				{
@@ -202,8 +196,6 @@ export class SegmentBuffer
 					version: cache.version,
 					lastRead: -1,
 				};
-				if (!writeFailed)
-					cache.metadata.lockedCount++;
 			}
 		});
 
@@ -229,33 +221,10 @@ export class SegmentBuffer
 				writeRequestCount: 0,
 				setCount: 0,
 				getCount: 0,
-				lockedCount: 0,
 			};
 			root.memory.metadata[id] = metadata;
 		}
 		return metadata;
-	}
-
-	public lock(id: number): boolean
-	{
-		const metadata = root.memory.metadata[id];
-		if (metadata === undefined)
-			return false;
-		metadata.locked = 1;
-		return true;
-	}
-
-	public unlock(id: number): void
-	{
-		const metadata = root.memory.metadata[id];
-		if (metadata !== undefined)
-			metadata.locked = undefined;
-	}
-
-	public isLocked(id: number): boolean
-	{
-		const metadata = root.memory.metadata[id];
-		return metadata !== undefined && metadata.locked === 1;
 	}
 
 	public get(id: number): { status: eSegmentBufferStatus, data?: string }
@@ -267,7 +236,7 @@ export class SegmentBuffer
 		metadata.getCount++;
 
 		const cache = this.cache.c[id];
-		if (cache !== undefined && cache.version >= metadata.savedVersion)
+		if (cache !== undefined && cache.version === metadata.savedVersion)
 			return { status: eSegmentBufferStatus.Ready, data: cache.d };
 
 		metadata.cacheMiss++;
