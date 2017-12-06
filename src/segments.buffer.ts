@@ -141,6 +141,8 @@ export class SegmentBuffer
 			const id = Number(key);
 
 			const metadata = root.memory.metadata[id];
+			if (metadata === undefined)
+				return;
 			// metadata can never be undefined, see afterTick()
 
 			const cache = this.cache.c[id];
