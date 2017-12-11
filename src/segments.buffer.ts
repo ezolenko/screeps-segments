@@ -270,7 +270,7 @@ export class SegmentBuffer
 		metadata.getCount++;
 
 		const cache = this.cache.c[id];
-		if (cache !== undefined && cache.version === metadata.savedVersion)
+		if (cache !== undefined && cache.version >= metadata.savedVersion)
 			return { status: eSegmentBufferStatus.Ready, data: cache.d };
 
 		metadata.cacheMiss++;
@@ -311,25 +311,25 @@ export class SegmentBuffer
 
 	public set(id: number, data: string)
 	{
-		const metadata = this.getOrCreateMetadata(id);
-		metadata.setCount++;
-
 		// updating cached version if exists
 		const cache = this.cache.c[id];
 		if (cache !== undefined)
 		{
 			cache.d = data;
 			cache.version++;
+			cache.metadata.setCount++;
 			return;
 		}
 
 		// new cached version
+		const metadata = this.getOrCreateMetadata(id);
 		this.cache.c[id] =
 		{
 			d: data,
 			version: 0,
 			metadata,
 		};
+		metadata.setCount++;
 	}
 
 	public clear(id: number)

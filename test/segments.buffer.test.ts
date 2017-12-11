@@ -34,7 +34,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 	}
 
 	// tslint:disable:no-string-literal
-	private runSetGet(out: { onAfterTick?: (() => void) | undefined }): boolean
+	public runSetGet(out: { onAfterTick?: (() => void) | undefined }): boolean
 	{
 		const id = 13;
 
@@ -132,7 +132,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 		]);
 	}
 
-	private runSetGetClear(out: { onAfterTick?: (() => void) | undefined }): boolean
+	public runSetGetClear(out: { onAfterTick?: (() => void) | undefined }): boolean
 	{
 		const id = 14;
 
@@ -158,6 +158,15 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 					logger.error(`${Game.time} setting data to '${data}'`);
 
 					this.buffer.set(id, data);
+
+					this.assertEqual(this.buffer["cache"].c[id].d, data);
+					this.assertEqual(this.buffer["cache"].c[id].version, iteration);
+					this.assertEqual(this.buffer["cache"].c[id].metadata.lastRead, iteration === 0 ? -1 : Game.time);
+					this.assertEqual(this.buffer["memory"].metadata[id], this.buffer["cache"].c[id].metadata);
+					this.assertEqual(this.buffer["memory"].metadata[id].setCount, iteration + 1);
+					this.assertEqual(this.buffer["memory"].metadata[id].savedVersion, iteration - 1);
+					this.assertEqual(this.buffer["memory"].version, this.buffer["version"]);
+					this.assertEqual(this.buffer["cache"].initTick, this.memory.lastCacheInitTick);
 
 					const result = this.buffer.get(id);
 					this.assertEqual(result.status, eSegmentBufferStatus.Ready);
@@ -216,7 +225,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 		return prefix + _.repeat("+", size - prefix.length);
 	}
 
-	private loadTesting(_out: { onAfterTick?: (() => void) | undefined }): boolean
+	public loadTesting(_out: { onAfterTick?: (() => void) | undefined }): boolean
 	{
 		if (this.memory.load === undefined)
 			this.memory.load = { usedSegments: [], readSegments: {} };
