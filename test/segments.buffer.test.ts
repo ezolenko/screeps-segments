@@ -119,8 +119,6 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 					this.assertEqual(cache.metadata.lastReadRequest, Game.time - 1);
 					this.assertEqual(cache.metadata.lastWrite, Game.time - 2);
 					this.assertEqual(cache.metadata.lastWriteRequest, -1);
-					this.assertEqual(cache.metadata.locked, undefined);
-					this.assertEqual(cache.metadata.lockedCount, 0);
 					this.assertEqual(cache.metadata.readCount, iteration + 1);
 					this.assertEqual(cache.metadata.readRequestCount, iteration + 1);
 					this.assertEqual(cache.metadata.savedVersion, iteration);
@@ -212,13 +210,34 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 		]);
 	}
 
+	private generateData(version: number, id: number, size: number)
+	{
+		const prefix = `${id}: ${version}`;
+		return prefix + _.repeat("+", size - prefix.length);
+	}
+
 	private loadTesting(_out: { onAfterTick?: (() => void) | undefined }): boolean
 	{
 		if (this.memory.load === undefined)
 			this.memory.load = { usedSegments: [], readSegments: {} };
 		const loadFactor = 30;
-		return this.runSequence(10,
+		const size = 1024 * 20;
+		return this.runSequence(2,
 		[
+			// cleanup
+			(iteration) =>
+			{
+				if (iteration === 0)
+				{
+					logger.error(`cleanup`);
+					this.buffer.forgetAll();
+
+					this.assertEqual(this.buffer["cache"].initTick, Game.time);
+
+					this.memory.lastCacheInitTick = Game.time;
+				}
+				return true;
+			},
 			() =>
 			{
 				return this.delayFinish(3, () =>
@@ -230,13 +249,13 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 
 					this.memory.load.usedSegments.forEach((id) =>
 					{
-						const data = `${id}data`;
+						const data = this.generateData(0, id, size);
 						this.buffer.set(id, data);
 					});
 
 					this.memory.load.usedSegments.forEach((id) =>
 					{
-						const expectedData = `${id}data`;
+						const expectedData = this.generateData(0, id, size);
 
 						const result = this.buffer.get(id);
 
@@ -251,7 +270,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 			{
 				this.memory.load.usedSegments.forEach((id) =>
 				{
-					const expectedData = `${id}data`;
+					const expectedData = this.generateData(0, id, size);
 
 					const result = this.buffer.get(id);
 
@@ -291,9 +310,9 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 
 		const res = this.runSequence(1,
 		[
+			() => this.loadTesting(out),
 			() => this.runSetGet(out),
 			() => this.runSetGetClear(out),
-			() => this.loadTesting(out),
 		]);
 
 		this.buffer.afterTick();

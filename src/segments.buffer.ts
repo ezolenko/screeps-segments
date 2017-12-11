@@ -3,6 +3,7 @@ import { SegmentsBasicWrapper } from "./segments.basic.wrapper";
 import { Grid, Text } from "./segment.visualizer";
 import { ILogger } from "./ilogger";
 import { IMemoryRoot } from "./memory.root";
+import { logger } from "../harness/logger";
 
 export interface ISegmentMetadata
 {
@@ -27,7 +28,7 @@ export interface ISegmentsBufferEntry
 {
 	d: string;
 	version: number;
-	lastRead: number;
+	lastWrite: number;
 }
 
 export interface ISegmentBuffer
@@ -80,6 +81,7 @@ export class SegmentBuffer
 	private s: SegmentsBasicWrapper;
 	private version = 2;
 	private clearDelay = 3;
+	private maxBufferSize = 500 * 1024;
 	private cache: ISegmentsCache = { initTick: Game.time, c: {} };
 
 	private get memory() { return root.memory; }
@@ -151,14 +153,15 @@ export class SegmentBuffer
 					metadata,
 					version: buffer.version,
 				};
-				buffer.lastRead = Game.time;
 			}
 
 			// if buffer is already saved, but wasn't read for a while, clear
-			if (metadata.savedVersion === buffer.version && buffer.lastRead >= 0 && Game.time - buffer.lastRead > this.clearDelay)
+			if (metadata.savedVersion === buffer.version && (Game.time - buffer.lastWrite) > this.clearDelay)
 			{
 				delete root.memory.buffer[id];
 			}
+			//else
+			//	logger.error(`keeping buffer for ${id}, ${JSON.stringify(buffer)}, savedVersion: ${metadata.savedVersion}, ${this.clearDelay}, age: ${Game.time - buffer.lastWrite}`);
 		});
 	}
 
@@ -194,10 +197,41 @@ export class SegmentBuffer
 				{
 					d: cache.d,
 					version: cache.version,
-					lastRead: -1,
+					lastWrite: Game.time,
 				};
 			}
 		});
+
+		// trim saved buffer if over the limit
+		let bufferSize = _.sum(root.memory.buffer, (b) => b.d.length);
+		if (bufferSize > this.maxBufferSize)
+		{
+			_.forOwn(root.memory.buffer, (buffer, key) =>
+			{
+				if (buffer === undefined)
+					return;
+
+				const id = Number(key);
+
+				const metadata = root.memory.metadata[id];
+				if (metadata === undefined)
+					return;
+
+				if (metadata.savedVersion === buffer.version)
+				{
+					bufferSize -= buffer.d.length;
+					delete root.memory.buffer[id];
+				}
+
+				if (bufferSize <= this.maxBufferSize)
+					return false;
+
+				return;
+			});
+
+			if (bufferSize > this.maxBufferSize)
+				logger.error(`segments.buffer: failed to trim memory buffer to ${this.maxBufferSize}, overhead: ${bufferSize - this.maxBufferSize}`);
+		}
 
 		this.s.afterTick();
 	}
@@ -260,7 +294,7 @@ export class SegmentBuffer
 			{
 				d: entry.d,
 				version: entry.version,
-				lastRead: -1,
+				lastWrite: Game.time,
 			};
 
 			return { status: eSegmentBufferStatus.Ready, data };
