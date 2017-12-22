@@ -63,10 +63,10 @@ export interface ISegmentsCache
 
 export enum eSegmentBufferStatus
 {
-	Ready,
-	Empty,
-	NextTick,
-	Delayed,
+	Ready = 0,
+	NextTick = 1,
+	Delayed = 2,
+	Empty = 3,
 }
 
 const root: IMemoryRoot<ISegmentBuffer> =
@@ -85,6 +85,8 @@ export class SegmentBuffer
 	private cache: ISegmentsCache = { initTick: Game.time, c: {} };
 
 	private get memory() { return root.memory; }
+
+	public get maxSize() { return this.s.maxMemory; }
 
 	constructor(private log: ILogger)
 	{
@@ -261,6 +263,11 @@ export class SegmentBuffer
 		return metadata;
 	}
 
+	public getUsedSegments(): number[]
+	{
+		return Object.keys(root.memory.metadata).map(Number);
+	}
+
 	public get(id: number): { status: eSegmentBufferStatus, data?: string }
 	{
 		const metadata = root.memory.metadata[id];
@@ -326,7 +333,7 @@ export class SegmentBuffer
 		this.cache.c[id] =
 		{
 			d: data,
-			version: 0,
+			version: metadata.savedVersion + 1,
 			metadata,
 		};
 		metadata.setCount++;

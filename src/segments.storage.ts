@@ -1,6 +1,10 @@
-interface ISegmentStorageMetadata
-{
+import { eSegmentBufferStatus, SegmentBuffer } from "./segments.buffer";
+import { ILogger } from "./ilogger";
 
+export interface ISegmentStorageMetadata
+{
+	ids: number[];
+	v: number;
 }
 
 interface ISegmentStorageCache
@@ -8,83 +12,168 @@ interface ISegmentStorageCache
 	[label: string]:
 	{
 		data?: string;
+		v: number;
 		metadata: ISegmentStorageMetadata;
 	};
 }
 
-// class SegmentStringStorage
-// {
-// 	private b: SegmentBuffer;
-// 	private cache: ISegmentStorageCache = {};
+export interface ISegmentStorage
+{
+	m: {[label: string]: ISegmentStorageMetadata; };
+}
 
-// 	private get memory() { return Memory.storage; }
+declare global
+{
+	interface Memory
+	{
+		storage: ISegmentStorage;
+	}
+}
 
-// 	constructor(private log: ILogger)
-// 	{
-// 		this.b = new SegmentBuffer(this.log);
-// 	}
+export class SegmentStringStorage
+{
+	private b: SegmentBuffer;
+	private cache: ISegmentStorageCache = {};
+	private availableSegments: number[] = _.range(0, 99);
 
-// 	public beforeTick()
-// 	{
-// 		this.b.beforeTick();
+	private get memory() { return Memory.storage; }
 
-// 		_.forOwn(this.cache, (e, key) =>
-// 		{
-// 			const id = Number(key);
+	constructor(private log: ILogger)
+	{
+		this.b = new SegmentBuffer(this.log);
+	}
 
-// 			const metadata = this.memory.metadata[id];
+	public beforeTick()
+	{
+		this.b.beforeTick();
 
-// 			// clear cache or restore metadata objects
-// 			if (metadata === undefined)
-// 				delete this.cache[id];
-// 			else
-// 				e.metadata = metadata;
-// 		});
-// 	}
+		_.forOwn(this.cache, (e, key) =>
+		{
+			const id = Number(key);
 
-// 	public afterTick()
-// 	{
-// 		this.b.afterTick();
-// 	}
+			const metadata = this.memory.m[id];
 
-// 	public setString(label: string, data: string)
-// 	{
+			// clear cache or restore metadata objects
+			if (metadata === undefined)
+				delete this.cache[id];
+			else
+				e.metadata = metadata;
+		});
+	}
 
-// 	}
+	public afterTick()
+	{
+		const freeSegments = _.difference(this.availableSegments, this.b.getUsedSegments());
+		const maxSize = this.b.maxSize;
 
-// 	private lock(metadata: ISegmentStorageMetadata)
-// 	{
-// 		if (metadata.locked === undefined)
-// 		{
-// 			metadata.ids.forEach(this.b.lock, this.b);
-// 			metadata.locked = 1;
-// 		}
-// 	}
+		_.forOwn(this.cache, (cache, label) =>
+		{
+			if (cache.v <= cache.metadata.v)
+				return;
 
-// 	private unlock(metadata: ISegmentStorageMetadata)
-// 	{
-// 		if (metadata.locked !== undefined)
-// 		{
-// 			metadata.ids.forEach(this.b.unlock, this.b);
-// 			metadata.locked = undefined;
-// 		}
-// 	}
+			if (cache.data === undefined)
+				return;
 
-// 	public getString(label: string): string | undefined
-// 	{
-// 		// if no metadata, doesn't exist
-// 		const metadata = this.memory.metadata[label];
-// 		if (metadata === undefined)
-// 			return undefined;
+			if (cache.data.length <= maxSize)
+			{
+				const id = freeSegments.pop();
+				if (id === undefined)
+					this.log.error(`SegmentStringStorage: run out of segments, dropping data: '${label}'`);
+				else
+					this.b.set(id, cache.data);
+				return;
+			}
 
-// 		const cache = this.cache[label];
-// 		if (cache === undefined)
-// 		{
-// 			const segments = metadata.ids.map(this.b.get, this.b);
+			const parts: string[] = [];
+			let start = 0;
+			while (start < cache.data.length)
+			{
+				const remaining = cache.data.length - start;
+				const end = start + Math.min(remaining, maxSize);
 
-// 			const entry
-// 		}
-// 	}
-// }
+				parts.push(cache.data.slice(start, end));
 
-// export const segments = new SegmentStringStorage();
+				start = end;
+			}
+
+			if (freeSegments.length < parts.length)
+			{
+				this.log.error(`SegmentStringStorage: run out of segments, dropping data: '${label}'`);
+				return;
+			}
+
+			parts.map((part) => this.b.set(freeSegments.pop()!, part));
+		});
+
+		this.b.afterTick();
+
+		return freeSegments;
+	}
+
+	public setString(label: string, data: string)
+	{
+		// updating cached version if exists
+		const cache = this.cache[label];
+		if (cache !== undefined)
+		{
+			cache.v++;
+			cache.data = data;
+			return;
+		}
+
+		let metadata = this.memory.m[label];
+		if (metadata === undefined)
+			metadata = { v: -1, ids: [] };
+
+		this.cache[label] =
+		{
+			v: metadata.v + 1,
+			data,
+			metadata,
+		};
+	}
+
+	public getString(label: string): { status: eSegmentBufferStatus, data?: string, partial?: string }
+	{
+		// if no metadata, doesn't exist
+		const metadata = this.memory.m[label];
+		if (metadata === undefined)
+			return { status: eSegmentBufferStatus.Empty };
+
+		const cache = this.cache[label];
+		if (cache !== undefined && cache.v >= metadata.v)
+			return { status: eSegmentBufferStatus.Ready, data: cache.data };
+
+		const segments = metadata.ids.map(this.b.get, this.b);
+
+		const parts: string[] = [];
+		let status: eSegmentBufferStatus = eSegmentBufferStatus.Ready;
+		for (const entry of segments)
+		{
+			if (entry.status > status)
+				status = entry.status;
+
+			if (status === eSegmentBufferStatus.Ready && entry.data !== undefined)
+				parts.push(entry.data);
+		}
+
+		if (status === eSegmentBufferStatus.Ready && parts.length === segments.length)
+		{
+			const cache =
+			{
+				v: metadata.v,
+				data: parts.join(""),
+				metadata,
+			};
+
+			this.cache[label] = cache;
+
+			return { status: eSegmentBufferStatus.Ready, data: cache.data };
+		}
+
+		if (parts.length === 0)
+			return { status, partial: parts.join("") };
+
+		return { status };
+	}
+}
