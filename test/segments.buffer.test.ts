@@ -34,7 +34,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 	}
 
 	// tslint:disable:no-string-literal
-	public runSetGet(out: { onAfterTick?: (() => void) | undefined }): boolean
+	private runSetGet(out: { onAfterTick?: (() => void) | undefined }): boolean
 	{
 		const id = 13;
 
@@ -132,7 +132,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 		]);
 	}
 
-	public runSetGetClear(out: { onAfterTick?: (() => void) | undefined }): boolean
+	private runSetGetClear(out: { onAfterTick?: (() => void) | undefined }): boolean
 	{
 		const id = 14;
 
@@ -225,7 +225,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 		return prefix + _.repeat("+", size - prefix.length);
 	}
 
-	public loadTesting(_out: { onAfterTick?: (() => void) | undefined }): boolean
+	private loadTesting(_out: { onAfterTick?: (() => void) | undefined }): boolean
 	{
 		if (this.memory.load === undefined)
 			this.memory.load = { usedSegments: [], readSegments: {} };

@@ -5,9 +5,7 @@
   "main": "./dist/lib/lib.js",
   "repository": "ezolenko/screeps-segments",
   "scripts": {
-    "postinstall": "typings install",
     "tslint": "tslint 'src/**/*.ts'; echo",
-    "typings": "typings",
     "build-lib": "rollup -c rollup.config.lib.js",
     "build-test": "rollup -c rollup.config.test.js",
     "upload-test-ptr": "rollup -c rollup.config.test.js --screeps .screeps.config.ptr.json",
@@ -20,6 +18,7 @@
     "@types/source-map": "^0.5.1",
     "@types/lodash": "^3.10.2",
     "@types/fs-extra": "^4.0.3",
+    "@types/screeps": "^2.1.0",
     "source-map": "0.6.1",
     "rollup": "^0.52.0",
     "rollup-plugin-screeps-upload": "git+https://github.com/ezolenko/rollup-plugin-screeps-upload#master",
@@ -34,7 +33,6 @@
     "tslib": "^1.8.1",
     "tslint": "5.8.0",
     "typescript": "^2.6.2",
-    "typings": "2.1.1",
     "git-rev-sync": "git+https://github.com/ezolenko/git-rev-sync-js#master",
     "fs-extra": "^4.0.2"
   }

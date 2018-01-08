@@ -176,4 +176,9 @@ export class SegmentStringStorage
 
 		return { status };
 	}
+
+	public visualize(scale: number)
+	{
+		this.b.visualize(scale);
+	}
 }
