@@ -1,7 +1,6 @@
-import { logger } from "../harness/logger";
 import { TestDefinition } from "../harness/runner";
 import { ScreepsTest } from "../harness/test";
-import { SegmentStringStorage } from "../src/segments.storage";
+import { segmentStorage, SegmentStringStorage } from "../src/segments.storage";
 import { eSegmentBufferStatus } from "../src/segments.buffer";
 
 export interface ISegmentsBufferTestMemory
@@ -17,18 +16,16 @@ export interface ISegmentsBufferTestMemory
 @TestDefinition(2)
 export class SegmentsStorageTest extends ScreepsTest<ISegmentsBufferTestMemory>
 {
-	private storage = new SegmentStringStorage(logger);
-
 	public beforeTick()
 	{
 		super.beforeTick();
 
-		this.profileInstance(this.storage, SegmentStringStorage.name);
+		this.profileInstance(segmentStorage, SegmentStringStorage.name);
 	}
 
 	public afterTick()
 	{
-		this.storage.visualize(3);
+		segmentStorage.visualize(3);
 
 		super.afterTick();
 	}
@@ -41,12 +38,12 @@ export class SegmentsStorageTest extends ScreepsTest<ISegmentsBufferTestMemory>
 		[
 			() =>
 			{
-				this.storage.setString(label, original);
+				segmentStorage.setString(label, original);
 				return true;
 			},
 			() =>
 			{
-				const { status, data } = this.storage.getString(label);
+				const { status, data } = segmentStorage.getString(label);
 
 				this.assertEqual(status, eSegmentBufferStatus.Ready);
 				this.assertEqual(data, original);
@@ -64,7 +61,7 @@ export class SegmentsStorageTest extends ScreepsTest<ISegmentsBufferTestMemory>
 
 	public run(): boolean
 	{
-		this.storage.beforeTick();
+		segmentStorage.beforeTick();
 
 		const out: { onAfterTick?: (() => void) } = {};
 
@@ -73,7 +70,7 @@ export class SegmentsStorageTest extends ScreepsTest<ISegmentsBufferTestMemory>
 			() => this.runSetGet(out),
 		]);
 
-		this.storage.afterTick();
+		segmentStorage.afterTick();
 
 		if (out.onAfterTick !== undefined)
 			out.onAfterTick();

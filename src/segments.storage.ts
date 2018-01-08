@@ -200,3 +200,5 @@ export class SegmentStringStorage
 		segmentBuffer.visualize(scale);
 	}
 }
+
+export const segmentStorage = new SegmentStringStorage();

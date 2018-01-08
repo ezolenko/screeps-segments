@@ -1,7 +1,7 @@
 import { ScreepsTest, IScreepsTest, initializeMemory, getCodeId } from "./test";
-import { logger } from "../harness/logger";
 import { SourceMapWrapper } from "./sourcemap";
 import { tracker } from "../src/runtime.tracker";
+import { log } from "../src/ilogger";
 
 interface ITestRunnerMemory
 {
@@ -50,13 +50,13 @@ class TestRunner extends ScreepsTest<ITestRunnerMemory>
 
 		if (this.allDone)
 		{
-			logger.error(`all done`);
+			log.error(`all done`);
 			return;
 		}
 
 		this.test = new this.current.constructor(this.sourceMap);
 
-		logger.error(`running ${this.test.constructor.name}, test ${this.memory.current + 1} of ${global.testRegistry.length}`);
+		log.error(`running ${this.test.constructor.name}, test ${this.memory.current + 1} of ${global.testRegistry.length}`);
 
 		this.test.beforeTick();
 	}
@@ -79,13 +79,13 @@ class TestRunner extends ScreepsTest<ITestRunnerMemory>
 
 			if (this.currentDone)
 			{
-				logger.error(`completed: ${this.current.constructor.name}`);
+				log.error(`completed: ${this.current.constructor.name}`);
 
 				this.memory.reports.push(this.test.report());
-				logger.error(`report generated: ${this.current.constructor.name}`);
+				log.error(`report generated: ${this.current.constructor.name}`);
 
 				this.test.cleanup();
-				logger.error(`cleaned up: ${this.current.constructor.name}`);
+				log.error(`cleaned up: ${this.current.constructor.name}`);
 
 				this.memory.current++;
 			}
@@ -112,7 +112,7 @@ export function runAllTests(codeId: string, sourceMap: SourceMapWrapper)
 		runner = new TestRunner(sourceMap);
 
 	tracker.beforeTick();
-	logger.error(tracker.report());
+	log.error(tracker.report());
 
 	let res: boolean;
 	try
@@ -122,7 +122,7 @@ export function runAllTests(codeId: string, sourceMap: SourceMapWrapper)
 		runner.afterTick();
 
 		if (res)
-			logger.error(runner.report());
+			log.error(runner.report());
 	}
 	catch (err)
 	{

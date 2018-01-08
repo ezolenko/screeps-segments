@@ -1,7 +1,7 @@
 import { IScreepsTestProfilerMemory, TestProfiler } from "./profiler";
-import { logger } from "./logger";
 import { SourceMapWrapper } from "./sourcemap";
 import { IMemoryRoot } from "../src/memory.root";
+import { log } from "../src/ilogger";
 
 export interface IScreepsTestMemory extends IScreepsTestProfilerMemory
 {
@@ -91,7 +91,7 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 	{
 		if (root.memory.suites[this.constructor.name] === undefined)
 		{
-			logger.info(`creating ${root.path}[${this.constructor.name}]`);
+			log.info(`creating ${root.path}[${this.constructor.name}]`);
 			root.memory.suites[this.constructor.name] =
 			{
 				p: {},
