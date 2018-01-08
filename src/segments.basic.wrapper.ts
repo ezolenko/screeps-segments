@@ -1,5 +1,5 @@
 import { Grid, Text } from "./segment.visualizer";
-import { ILogger } from "./ilogger";
+import { log } from "./ilogger";
 
 export class SegmentsBasicWrapper
 {
@@ -12,10 +12,6 @@ export class SegmentsBasicWrapper
 	public get maxSegments() { return 100; }
 	public get maxMemory() { return 100 * 1024; }
 	public get maxActive() { return 10; }
-
-	constructor(private log: ILogger)
-	{
-	}
 
 	public beforeTick()
 	{
@@ -49,7 +45,7 @@ export class SegmentsBasicWrapper
 		const fixed = Number(id);
 		if (!Number.isInteger(fixed) || fixed < 0 || fixed >= this.maxSegments)
 		{
-			this.log.error(`segments: invalid id '${id}'`);
+			log.error(`segments: invalid id '${id}'`);
 			return undefined;
 		}
 		return fixed;
@@ -74,7 +70,7 @@ export class SegmentsBasicWrapper
 
 		if (data.length > this.maxMemory)
 		{
-			this.log.error(`segments: trying to save ${data.length / 1024} Kb to segment ${fixed}`);
+			log.error(`segments: trying to save ${data.length / 1024} Kb to segment ${fixed}`);
 			return false;
 		}
 
@@ -188,3 +184,5 @@ export class SegmentsBasicWrapper
 		grid.draw(new RoomVisual());
 	}
 }
+
+export const segmentWrapper = new SegmentsBasicWrapper();

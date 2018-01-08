@@ -1,5 +1,7 @@
-//import "./segments.basic.wrapper.test";
-import "./segments.buffer.test";
+// import "./segments.basic.wrapper.test";
+// import "./segments.buffer.test";
+import "./segments.storage.test";
+
 import { runAllTests } from "../harness/runner";
 import { sourceMap } from "../harness/sourcemap";
 

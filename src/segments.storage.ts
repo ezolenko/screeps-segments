@@ -1,5 +1,6 @@
-import { eSegmentBufferStatus, SegmentBuffer } from "./segments.buffer";
-import { ILogger } from "./ilogger";
+import { eSegmentBufferStatus, segmentBuffer } from "./segments.buffer";
+import { log } from "./ilogger";
+import { IMemoryRoot } from "./memory.root";
 
 export interface ISegmentStorageMetadata
 {
@@ -19,6 +20,8 @@ interface ISegmentStorageCache
 
 export interface ISegmentStorage
 {
+	version: number;
+	initTick: number;
 	m: {[label: string]: ISegmentStorageMetadata; };
 }
 
@@ -30,22 +33,37 @@ declare global
 	}
 }
 
+const root: IMemoryRoot<ISegmentStorage> =
+{
+	get memory(): ISegmentStorage { return Memory.storage; },
+	set memory(value: ISegmentStorage) { Memory.storage = value; },
+	path: "Memory.storage",
+};
+
 export class SegmentStringStorage
 {
-	private b: SegmentBuffer;
+	private version = 0;
 	private cache: ISegmentStorageCache = {};
 	private availableSegments: number[] = _.range(0, 99);
 
-	private get memory() { return Memory.storage; }
+	private get memory() { return root.memory; }
 
-	constructor(private log: ILogger)
+	private reinitMemory()
 	{
-		this.b = new SegmentBuffer(this.log);
+		root.memory =
+		{
+			version: this.version,
+			initTick: Game.time,
+			m: {},
+		};
 	}
 
 	public beforeTick()
 	{
-		this.b.beforeTick();
+		segmentBuffer.beforeTick();
+
+		if (root.memory === undefined || root.memory.version !== this.version)
+			this.reinitMemory();
 
 		_.forOwn(this.cache, (e, key) =>
 		{
@@ -63,8 +81,8 @@ export class SegmentStringStorage
 
 	public afterTick()
 	{
-		const freeSegments = _.difference(this.availableSegments, this.b.getUsedSegments());
-		const maxSize = this.b.maxSize;
+		const freeSegments = _.difference(this.availableSegments, segmentBuffer.getUsedSegments());
+		const maxSize = segmentBuffer.maxSize;
 
 		_.forOwn(this.cache, (cache, label) =>
 		{
@@ -78,9 +96,9 @@ export class SegmentStringStorage
 			{
 				const id = freeSegments.pop();
 				if (id === undefined)
-					this.log.error(`SegmentStringStorage: run out of segments, dropping data: '${label}'`);
+					log.error(`SegmentStringStorage: run out of segments, dropping data: '${label}'`);
 				else
-					this.b.set(id, cache.data);
+					segmentBuffer.set(id, cache.data);
 				return;
 			}
 
@@ -98,14 +116,14 @@ export class SegmentStringStorage
 
 			if (freeSegments.length < parts.length)
 			{
-				this.log.error(`SegmentStringStorage: run out of segments, dropping data: '${label}'`);
+				log.error(`SegmentStringStorage: run out of segments, dropping data: '${label}'`);
 				return;
 			}
 
-			parts.map((part) => this.b.set(freeSegments.pop()!, part));
+			parts.map((part) => segmentBuffer.set(freeSegments.pop()!, part));
 		});
 
-		this.b.afterTick();
+		segmentBuffer.afterTick();
 
 		return freeSegments;
 	}
@@ -144,7 +162,7 @@ export class SegmentStringStorage
 		if (cache !== undefined && cache.v >= metadata.v)
 			return { status: eSegmentBufferStatus.Ready, data: cache.data };
 
-		const segments = metadata.ids.map(this.b.get, this.b);
+		const segments = metadata.ids.map(segmentBuffer.get, segmentBuffer);
 
 		const parts: string[] = [];
 		let status: eSegmentBufferStatus = eSegmentBufferStatus.Ready;
@@ -179,6 +197,6 @@ export class SegmentStringStorage
 
 	public visualize(scale: number)
 	{
-		this.b.visualize(scale);
+		segmentBuffer.visualize(scale);
 	}
 }

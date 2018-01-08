@@ -1,9 +1,8 @@
 import { tracker } from "./runtime.tracker";
-import { SegmentsBasicWrapper } from "./segments.basic.wrapper";
+import { segmentWrapper } from "./segments.basic.wrapper";
 import { Grid, Text } from "./segment.visualizer";
-import { ILogger } from "./ilogger";
+import { log } from "./ilogger";
 import { IMemoryRoot } from "./memory.root";
-import { logger } from "../harness/logger";
 
 export interface ISegmentMetadata
 {
@@ -78,7 +77,6 @@ const root: IMemoryRoot<ISegmentBuffer> =
 
 export class SegmentBuffer
 {
-	private s: SegmentsBasicWrapper;
 	private version = 2;
 	private clearDelay = 3;
 	private maxBufferSize = 500 * 1024;
@@ -86,12 +84,7 @@ export class SegmentBuffer
 
 	private get memory() { return root.memory; }
 
-	public get maxSize() { return this.s.maxMemory; }
-
-	constructor(private log: ILogger)
-	{
-		this.s = new SegmentsBasicWrapper(this.log);
-	}
+	public get maxSize() { return segmentWrapper.maxMemory; }
 
 	private reinitMemory()
 	{
@@ -107,7 +100,7 @@ export class SegmentBuffer
 
 	public beforeTick()
 	{
-		this.s.beforeTick();
+		segmentWrapper.beforeTick();
 
 		if (root.memory === undefined || root.memory.version !== this.version)
 			this.reinitMemory();
@@ -179,7 +172,7 @@ export class SegmentBuffer
 			const id = Number(key);
 
 			let writeFailed: boolean;
-			if (this.s.saveSegment(id, cache.d))
+			if (segmentWrapper.saveSegment(id, cache.d))
 			{
 				cache.metadata.savedVersion = cache.version;
 				cache.metadata.lastWrite = Game.time;
@@ -232,10 +225,10 @@ export class SegmentBuffer
 			});
 
 			if (bufferSize > this.maxBufferSize)
-				logger.error(`segments.buffer: failed to trim memory buffer to ${this.maxBufferSize}, overhead: ${bufferSize - this.maxBufferSize}`);
+				log.error(`segments.buffer: failed to trim memory buffer to ${this.maxBufferSize}, overhead: ${bufferSize - this.maxBufferSize}`);
 		}
 
-		this.s.afterTick();
+		segmentWrapper.afterTick();
 	}
 
 	private getOrCreateMetadata(id: number)
@@ -283,7 +276,7 @@ export class SegmentBuffer
 		metadata.cacheMiss++;
 
 		// if segment is ready, use it, save to cache
-		const data = this.s.getSegment(id);
+		const data = segmentWrapper.getSegment(id);
 		if (data !== undefined)
 		{
 			metadata.readCount++;
@@ -310,7 +303,7 @@ export class SegmentBuffer
 		// try requesting segment
 		metadata.readRequestCount++;
 		metadata.lastReadRequest = Game.time;
-		if (this.s.requestSegment(id))
+		if (segmentWrapper.requestSegment(id))
 			return { status: eSegmentBufferStatus.NextTick };
 
 		return { status: eSegmentBufferStatus.Delayed };
@@ -397,7 +390,7 @@ export class SegmentBuffer
 			},
 		};
 
-		const grid = this.s.makeGrid({ columns: 3, rows: 5 });
+		const grid = segmentWrapper.makeGrid({ columns: 3, rows: 5 });
 
 		for (let id = 0; id < 100; id++)
 		{
@@ -435,3 +428,5 @@ export class SegmentBuffer
 		this.cache = { initTick: Game.time, c: {} };
 	}
 }
+
+export const segmentBuffer = new SegmentBuffer();

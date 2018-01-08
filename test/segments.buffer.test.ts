@@ -1,8 +1,7 @@
-//import { tracker } from '../src/runtime.tracker';
 import { TestDefinition } from "../harness/runner";
 import { ScreepsTest } from "../harness/test";
-import { SegmentBuffer, eSegmentBufferStatus } from "../lib/lib";
-import { logger } from "../harness/logger";
+import { SegmentBuffer, eSegmentBufferStatus, segmentBuffer } from "../lib/lib";
+import { log } from "../src/ilogger";
 
 export interface ISegmentsBufferTestMemory
 {
@@ -17,18 +16,16 @@ export interface ISegmentsBufferTestMemory
 @TestDefinition(0)
 export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 {
-	private buffer = new SegmentBuffer(logger);
-
 	public beforeTick()
 	{
 		super.beforeTick();
 
-		this.profileInstance(this.buffer, SegmentBuffer.name);
+		this.profileInstance(segmentBuffer, SegmentBuffer.name);
 	}
 
 	public afterTick()
 	{
-		this.buffer.visualize(3);
+		segmentBuffer.visualize(3);
 
 		super.afterTick();
 	}
@@ -45,10 +42,10 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 			{
 				if (iteration === 0)
 				{
-					logger.error(`cleanup`);
-					this.buffer.forgetAll();
+					log.error(`cleanup`);
+					segmentBuffer.forgetAll();
 
-					this.assertEqual(this.buffer["cache"].initTick, Game.time);
+					this.assertEqual(segmentBuffer["cache"].initTick, Game.time);
 
 					this.memory.lastCacheInitTick = Game.time;
 				}
@@ -61,21 +58,21 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 				{
 					const data = `${id}${iteration}`;
 
-					logger.error(`${Game.time} setting data to '${data}'`);
+					log.error(`${Game.time} setting data to '${data}'`);
 
-					this.buffer.set(id, data);
+					segmentBuffer.set(id, data);
 
-					this.assertEqual(this.buffer["cache"].c[id].d, data);
-					this.assertEqual(this.buffer["cache"].c[id].version, iteration);
-					this.assertEqual(this.buffer["cache"].c[id].metadata.lastRead, iteration === 0 ? -1 : Game.time);
-					this.assertEqual(this.buffer["memory"].metadata[id], this.buffer["cache"].c[id].metadata);
-					this.assertEqual(this.buffer["memory"].metadata[id].setCount, iteration + 1);
-					this.assertEqual(this.buffer["memory"].version, this.buffer["version"]);
-					this.assertEqual(this.buffer["cache"].initTick, this.memory.lastCacheInitTick);
+					this.assertEqual(segmentBuffer["cache"].c[id].d, data);
+					this.assertEqual(segmentBuffer["cache"].c[id].version, iteration);
+					this.assertEqual(segmentBuffer["cache"].c[id].metadata.lastRead, iteration === 0 ? -1 : Game.time);
+					this.assertEqual(segmentBuffer["memory"].metadata[id], segmentBuffer["cache"].c[id].metadata);
+					this.assertEqual(segmentBuffer["memory"].metadata[id].setCount, iteration + 1);
+					this.assertEqual(segmentBuffer["memory"].version, segmentBuffer["version"]);
+					this.assertEqual(segmentBuffer["cache"].initTick, this.memory.lastCacheInitTick);
 
 					out.onAfterTick = () =>
 					{
-						const buffer = this.buffer["memory"].buffer[id];
+						const buffer = segmentBuffer["memory"].buffer[id];
 						if (iteration === 0)
 							this.assertEqual(buffer, undefined);
 					};
@@ -89,9 +86,9 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 
 				const data = `${id}${iteration}`;
 
-				const segment = this.buffer.get(id);
+				const segment = segmentBuffer.get(id);
 
-				this.assertEqual(this.buffer["cache"].initTick, this.memory.lastCacheInitTick);
+				this.assertEqual(segmentBuffer["cache"].initTick, this.memory.lastCacheInitTick);
 
 				this.assertNotEqual(segment.status, eSegmentBufferStatus.Empty);
 
@@ -104,10 +101,10 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 				this.assertEqual(segment.status, eSegmentBufferStatus.Ready);
 				this.assertEqual(segment.data, data);
 
-				const cache = this.buffer["cache"].c[id];
+				const cache = segmentBuffer["cache"].c[id];
 				this.assertNotEqual(cache, undefined);
 
-				logger.error(`${Game.time} getting data '${cache.d}'`);
+				log.error(`${Game.time} getting data '${cache.d}'`);
 
 				if (cache !== undefined)
 				{
@@ -143,8 +140,8 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 			{
 				if (iteration === 0)
 				{
-					logger.error(`cleanup`);
-					this.buffer.forgetAll();
+					log.error(`cleanup`);
+					segmentBuffer.forgetAll();
 					this.memory.lastCacheInitTick = Game.time;
 				}
 				return true;
@@ -155,26 +152,26 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 				{
 					const data = `${id}${iteration}`;
 
-					logger.error(`${Game.time} setting data to '${data}'`);
+					log.error(`${Game.time} setting data to '${data}'`);
 
-					this.buffer.set(id, data);
+					segmentBuffer.set(id, data);
 
-					this.assertEqual(this.buffer["cache"].c[id].d, data);
-					this.assertEqual(this.buffer["cache"].c[id].version, iteration);
-					this.assertEqual(this.buffer["cache"].c[id].metadata.lastRead, iteration === 0 ? -1 : Game.time);
-					this.assertEqual(this.buffer["memory"].metadata[id], this.buffer["cache"].c[id].metadata);
-					this.assertEqual(this.buffer["memory"].metadata[id].setCount, iteration + 1);
-					this.assertEqual(this.buffer["memory"].metadata[id].savedVersion, iteration - 1);
-					this.assertEqual(this.buffer["memory"].version, this.buffer["version"]);
-					this.assertEqual(this.buffer["cache"].initTick, this.memory.lastCacheInitTick);
+					this.assertEqual(segmentBuffer["cache"].c[id].d, data);
+					this.assertEqual(segmentBuffer["cache"].c[id].version, iteration);
+					this.assertEqual(segmentBuffer["cache"].c[id].metadata.lastRead, iteration === 0 ? -1 : Game.time);
+					this.assertEqual(segmentBuffer["memory"].metadata[id], segmentBuffer["cache"].c[id].metadata);
+					this.assertEqual(segmentBuffer["memory"].metadata[id].setCount, iteration + 1);
+					this.assertEqual(segmentBuffer["memory"].metadata[id].savedVersion, iteration - 1);
+					this.assertEqual(segmentBuffer["memory"].version, segmentBuffer["version"]);
+					this.assertEqual(segmentBuffer["cache"].initTick, this.memory.lastCacheInitTick);
 
-					const result = this.buffer.get(id);
+					const result = segmentBuffer.get(id);
 					this.assertEqual(result.status, eSegmentBufferStatus.Ready);
 					this.assertEqual(result.data, data);
 
 					out.onAfterTick = () =>
 					{
-						const buffer = this.buffer["memory"].buffer[id];
+						const buffer = segmentBuffer["memory"].buffer[id];
 						if (iteration === 0)
 							this.assertEqual(buffer, undefined);
 					};
@@ -186,12 +183,12 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 			{
 				return this.delayFinish(1, () =>
 				{
-					this.buffer.clear(id);
+					segmentBuffer.clear(id);
 
-					const cache = this.buffer["cache"].c[id];
+					const cache = segmentBuffer["cache"].c[id];
 					this.assertEqual(cache, undefined);
 
-					const result = this.buffer.get(id);
+					const result = segmentBuffer.get(id);
 					this.assertEqual(result.status, eSegmentBufferStatus.Empty);
 
 					return true;
@@ -205,10 +202,10 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 					{
 						return this.delayFinish(1, () =>
 						{
-							const cache = this.buffer["cache"].c[id];
+							const cache = segmentBuffer["cache"].c[id];
 							this.assertEqual(cache, undefined);
 
-							const result = this.buffer.get(id);
+							const result = segmentBuffer.get(id);
 							this.assertEqual(result.status, eSegmentBufferStatus.Empty);
 
 							return true;
@@ -238,10 +235,10 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 			{
 				if (iteration === 0)
 				{
-					logger.error(`cleanup`);
-					this.buffer.forgetAll();
+					log.error(`cleanup`);
+					segmentBuffer.forgetAll();
 
-					this.assertEqual(this.buffer["cache"].initTick, Game.time);
+					this.assertEqual(segmentBuffer["cache"].initTick, Game.time);
 
 					this.memory.lastCacheInitTick = Game.time;
 				}
@@ -251,7 +248,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 			{
 				return this.delayFinish(3, () =>
 				{
-					logger.error(`writing ${loadFactor} segments`);
+					log.error(`writing ${loadFactor} segments`);
 					// 30 random segments
 					this.memory.load.usedSegments = _.shuffle(_.range(0, 99)).slice(0, loadFactor);
 					this.memory.load.readSegments = {};
@@ -259,14 +256,14 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 					this.memory.load.usedSegments.forEach((id) =>
 					{
 						const data = this.generateData(0, id, size);
-						this.buffer.set(id, data);
+						segmentBuffer.set(id, data);
 					});
 
 					this.memory.load.usedSegments.forEach((id) =>
 					{
 						const expectedData = this.generateData(0, id, size);
 
-						const result = this.buffer.get(id);
+						const result = segmentBuffer.get(id);
 
 						this.assertEqual(result.status, eSegmentBufferStatus.Ready);
 						this.assertEqual(result.data, expectedData);
@@ -281,9 +278,9 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 				{
 					const expectedData = this.generateData(0, id, size);
 
-					const result = this.buffer.get(id);
+					const result = segmentBuffer.get(id);
 
-					logger.error(`reading ${id}, status: ${result.status}`);
+					log.error(`reading ${id}, status: ${result.status}`);
 
 					if (result.status === eSegmentBufferStatus.Ready)
 					{
@@ -294,7 +291,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 					this.assertNotEqual(result.status, eSegmentBufferStatus.Empty);
 				});
 
-				logger.error(`reading ${loadFactor} segments, read so far: ${_.sum(this.memory.load.readSegments)}`);
+				log.error(`reading ${loadFactor} segments, read so far: ${_.sum(this.memory.load.readSegments)}`);
 
 				return _.sum(this.memory.load.readSegments) === loadFactor;
 			},
@@ -303,7 +300,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 			{
 				this.memory.load.usedSegments.forEach((id) =>
 				{
-					this.assertEqual(this.buffer["memory"].buffer[id], undefined);
+					this.assertEqual(segmentBuffer["memory"].buffer[id], undefined);
 				});
 
 				return true;
@@ -313,7 +310,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 
 	public run(): boolean
 	{
-		this.buffer.beforeTick();
+		segmentBuffer.beforeTick();
 
 		const out: { onAfterTick?: (() => void) } = {};
 
@@ -324,7 +321,7 @@ export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 			() => this.runSetGetClear(out),
 		]);
 
-		this.buffer.afterTick();
+		segmentBuffer.afterTick();
 
 		if (out.onAfterTick !== undefined)
 			out.onAfterTick();
