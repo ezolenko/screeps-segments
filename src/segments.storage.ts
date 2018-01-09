@@ -141,7 +141,10 @@ export class SegmentStringStorage
 
 		let metadata = this.memory.m[label];
 		if (metadata === undefined)
+		{
 			metadata = { v: -1, ids: [] };
+			this.memory.m[label] = metadata;
+		}
 
 		this.cache[label] =
 		{

@@ -34,16 +34,25 @@ export class SegmentsStorageTest extends ScreepsTest<ISegmentsBufferTestMemory>
 	{
 		const label = "label1";
 		const original = this.generateData(0, 13, 2.5 * 500 * 1024);
-		return this.runSequence(1,
+		return this.runSequence(10,
 		[
 			() =>
 			{
 				segmentStorage.setString(label, original);
+
+				const { status, data } = segmentStorage.getString(label);
+
+				this.assertEqual(status, eSegmentBufferStatus.Ready);
+				this.assertEqual(data, original);
+
 				return true;
 			},
 			() =>
 			{
 				const { status, data } = segmentStorage.getString(label);
+
+				if (status === eSegmentBufferStatus.NextTick || status === eSegmentBufferStatus.Delayed)
+					return false;
 
 				this.assertEqual(status, eSegmentBufferStatus.Ready);
 				this.assertEqual(data, original);

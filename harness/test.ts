@@ -269,14 +269,22 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 		this._assert(expression, comment);
 	}
 
+	private elipse(data: string, maxSize: number)
+	{
+		if (!data || data.length < maxSize)
+			return data;
+		const half = Math.floor(maxSize / 2);
+		return `${data.substring(0, half)}…${data.substring(data.length - half, data.length)}[${data.length}]`;
+	}
+
 	protected assertEqual<T>(expression: T, test: T, comment?: string): void
 	{
-		this._assert(expression === test, comment, () => `expected '${JSON.stringify(test)}' got '${JSON.stringify(expression)}'`);
+		this._assert(expression === test, comment, () => `expected '${this.elipse(JSON.stringify(test), 20)}' got '${this.elipse(JSON.stringify(expression), 20)}'`);
 	}
 
 	protected assertNotEqual<T>(expression: T, test: T, comment?: string): void
 	{
-		this._assert(expression !== test, comment, () => `unexpectedly got '${JSON.stringify(expression)}'`);
+		this._assert(expression !== test, comment, () => `unexpectedly got '${this.elipse(JSON.stringify(expression), 20)}'`);
 	}
 
 	public report()
