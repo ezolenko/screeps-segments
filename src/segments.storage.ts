@@ -44,7 +44,7 @@ export class SegmentStringStorage
 {
 	private version = 0;
 	private cache: ISegmentStorageCache = {};
-	private availableSegments: number[] = _.range(0, 99);
+	private availableSegments: number[] = _.range(0, 100);
 
 	private get memory() { return root.memory; }
 
@@ -92,13 +92,19 @@ export class SegmentStringStorage
 			if (cache.data === undefined)
 				return;
 
+			cache.metadata.ids.forEach((id) => segmentBuffer.clear(id));
+
 			if (cache.data.length <= maxSize)
 			{
 				const id = freeSegments.pop();
 				if (id === undefined)
 					log.error(`SegmentStringStorage: run out of segments, dropping data: '${label}'`);
 				else
+				{
 					segmentBuffer.set(id, cache.data);
+					cache.metadata.ids = [ id ];
+					cache.metadata.v = cache.v;
+				}
 				return;
 			}
 
@@ -120,7 +126,17 @@ export class SegmentStringStorage
 				return;
 			}
 
-			parts.map((part) => segmentBuffer.set(freeSegments.pop()!, part));
+			cache.metadata.ids = [];
+			parts.map((part) =>
+			{
+				const id = freeSegments.pop();
+				if (id !== undefined)
+				{
+					segmentBuffer.set(id, part);
+					cache.metadata.ids.push(id);
+					cache.metadata.v = cache.v;
+				}
+			});
 		});
 
 		segmentBuffer.afterTick();

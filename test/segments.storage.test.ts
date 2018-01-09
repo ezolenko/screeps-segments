@@ -1,7 +1,7 @@
 import { TestDefinition } from "../harness/runner";
 import { ScreepsTest } from "../harness/test";
 import { segmentStorage, SegmentStringStorage } from "../src/segments.storage";
-import { eSegmentBufferStatus } from "../src/segments.buffer";
+import { eSegmentBufferStatus, segmentBuffer } from "../src/segments.buffer";
 
 export interface ISegmentsBufferTestMemory
 {
@@ -33,22 +33,29 @@ export class SegmentsStorageTest extends ScreepsTest<ISegmentsBufferTestMemory>
 	public runSetGet(_out: { onAfterTick?: (() => void) | undefined }): boolean
 	{
 		const label = "label1";
-		const original = this.generateData(0, 13, 2.5 * 500 * 1024);
-		return this.runSequence(10,
+		return this.runSequence(1,
 		[
-			() =>
+			(iteration) =>
 			{
-				segmentStorage.setString(label, original);
+				const original = this.generateData(iteration, 13, 2.5 * segmentBuffer.maxSize);
+				return this.delayFinish(1, () =>
+				{
+					segmentStorage.setString(label, original);
 
-				const { status, data } = segmentStorage.getString(label);
+					const { status, data } = segmentStorage.getString(label);
 
-				this.assertEqual(status, eSegmentBufferStatus.Ready);
-				this.assertEqual(data, original);
+					this.assertEqual(status, eSegmentBufferStatus.Ready);
+					this.assertEqual(data, original);
 
-				return true;
+					return true;
+				});
 			},
-			() =>
+			(iteration) =>
 			{
+				this.assertEqual(segmentBuffer.getUsedSegments().length, 3);
+
+				const original = this.generateData(iteration, 13, 2.5 * segmentBuffer.maxSize);
+
 				const { status, data } = segmentStorage.getString(label);
 
 				if (status === eSegmentBufferStatus.NextTick || status === eSegmentBufferStatus.Delayed)
@@ -57,6 +64,11 @@ export class SegmentsStorageTest extends ScreepsTest<ISegmentsBufferTestMemory>
 				this.assertEqual(status, eSegmentBufferStatus.Ready);
 				this.assertEqual(data, original);
 
+				return true;
+			},
+			(_iteration) =>
+			{
+				this.assertEqual(segmentBuffer.getUsedSegments().length, 3);
 				return true;
 			},
 		]);
@@ -76,6 +88,11 @@ export class SegmentsStorageTest extends ScreepsTest<ISegmentsBufferTestMemory>
 
 		const res = this.runSequence(1,
 		[
+			() =>
+			{
+				this.assertEqual(segmentBuffer.getUsedSegments().length, 0);
+				return true;
+			},
 			() => this.runSetGet(out),
 		]);
 
