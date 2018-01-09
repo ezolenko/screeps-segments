@@ -15,6 +15,7 @@ declare global
 	{
 		testRegistry: Array<{ constructor: new (sourceMap: SourceMapWrapper) => IScreepsTest, order: number }>;
 		restartTest(): void;
+		wipeMemory(): void;
 	}
 }
 
@@ -151,4 +152,9 @@ export function TestDefinition(order: number)
 global.restartTest = function()
 {
 	initializeMemory(getCodeId(), true);
+};
+
+global.wipeMemory = function()
+{
+	Object.keys(Memory).forEach((key) => delete Memory[key]);
 };

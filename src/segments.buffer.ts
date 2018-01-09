@@ -225,7 +225,28 @@ export class SegmentBuffer
 			});
 
 			if (bufferSize > this.maxBufferSize)
+			{
 				log.error(`segments.buffer: failed to trim memory buffer to ${this.maxBufferSize}, overhead: ${bufferSize - this.maxBufferSize}`);
+
+				_.forOwn(root.memory.buffer, (buffer, key) =>
+				{
+					if (buffer === undefined)
+						return;
+
+					const id = Number(key);
+
+					log.error(`segments.buffer: dropping data in segment ${id}, freeing ${buffer.d.length}`);
+
+					bufferSize -= buffer.d.length;
+					delete root.memory.buffer[id];
+					delete root.memory.metadata[id];
+					delete this.cache.c[id];
+
+					if (bufferSize <= this.maxBufferSize)
+						return false;
+					return;
+				});
+			}
 		}
 
 		segmentWrapper.afterTick();
@@ -311,6 +332,7 @@ export class SegmentBuffer
 
 	public set(id: number, data: string)
 	{
+		log.info(`SegmentBuffer: setting ${id}`);
 		// updating cached version if exists
 		const cache = this.cache.c[id];
 		if (cache !== undefined)
