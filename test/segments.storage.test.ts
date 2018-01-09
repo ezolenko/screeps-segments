@@ -3,18 +3,8 @@ import { ScreepsTest } from "../harness/test";
 import { segmentStorage, SegmentStringStorage } from "../src/segments.storage";
 import { eSegmentBufferStatus, segmentBuffer } from "../src/segments.buffer";
 
-export interface ISegmentsBufferTestMemory
-{
-	lastCacheInitTick: number;
-	load:
-	{
-		usedSegments: number[];
-		readSegments: { [id: number]: 1 | undefined };
-	};
-}
-
 @TestDefinition(2)
-export class SegmentsStorageTest extends ScreepsTest<ISegmentsBufferTestMemory>
+export class SegmentsStorageTest extends ScreepsTest<{}>
 {
 	public beforeTick()
 	{
@@ -30,6 +20,7 @@ export class SegmentsStorageTest extends ScreepsTest<ISegmentsBufferTestMemory>
 		super.afterTick();
 	}
 
+	// tslint:disable:no-string-literal
 	public runSetGet(_out: { onAfterTick?: (() => void) | undefined }): boolean
 	{
 		const label = "label1";
@@ -42,6 +33,11 @@ export class SegmentsStorageTest extends ScreepsTest<ISegmentsBufferTestMemory>
 				{
 					segmentStorage.setString(label, original);
 
+					this.assertEqual(segmentStorage["cache"].c[label].data, original);
+					this.assertEqual(segmentStorage["cache"].c[label].v, iteration);
+					this.assertEqual(segmentStorage["cache"].c[label].metadata.v, iteration - 1);
+					this.assertEqual(segmentStorage["memory"].m[label].v, iteration - 1);
+
 					const { status, data } = segmentStorage.getString(label);
 
 					this.assertEqual(status, eSegmentBufferStatus.Ready);
@@ -52,14 +48,20 @@ export class SegmentsStorageTest extends ScreepsTest<ISegmentsBufferTestMemory>
 			},
 			(iteration) =>
 			{
+				const original = this.generateData(iteration, 13, 2.5 * segmentBuffer.maxSize);
+
 				this.assertEqual(segmentBuffer.getUsedSegments().length, 3);
 
-				const original = this.generateData(iteration, 13, 2.5 * segmentBuffer.maxSize);
+				this.assertEqual(segmentStorage["memory"].m[label].v, iteration);
 
 				const { status, data } = segmentStorage.getString(label);
 
 				if (status === eSegmentBufferStatus.NextTick || status === eSegmentBufferStatus.Delayed)
 					return false;
+
+				this.assertEqual(segmentStorage["cache"].c[label].data, original);
+				this.assertEqual(segmentStorage["cache"].c[label].v, iteration);
+				this.assertEqual(segmentStorage["cache"].c[label].metadata.v, iteration);
 
 				this.assertEqual(status, eSegmentBufferStatus.Ready);
 				this.assertEqual(data, original);

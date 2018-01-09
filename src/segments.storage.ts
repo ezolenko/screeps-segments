@@ -10,12 +10,13 @@ export interface ISegmentStorageMetadata
 
 interface ISegmentStorageCache
 {
-	[label: string]:
+	initTick: number;
+	c: { [label: string]:
 	{
 		data?: string;
 		v: number;
 		metadata: ISegmentStorageMetadata;
-	};
+	}};
 }
 
 export interface ISegmentStorage
@@ -43,7 +44,7 @@ const root: IMemoryRoot<ISegmentStorage> =
 export class SegmentStringStorage
 {
 	private version = 0;
-	private cache: ISegmentStorageCache = {};
+	private cache: ISegmentStorageCache = { initTick: Game.time, c: {} };
 	private availableSegments: number[] = _.range(0, 100);
 
 	private get memory() { return root.memory; }
@@ -65,18 +66,21 @@ export class SegmentStringStorage
 		if (root.memory === undefined || root.memory.version !== this.version)
 			this.reinitMemory();
 
-		_.forOwn(this.cache, (e, key) =>
-		{
-			const id = Number(key);
+		if (root.memory.initTick !== this.cache.initTick)
+			this.cache = { initTick: root.memory.initTick, c: {} };
+		else
+			_.forOwn(this.cache, (e, key) =>
+			{
+				const id = Number(key);
 
-			const metadata = this.memory.m[id];
+				const metadata = root.memory.m[id];
 
-			// clear cache or restore metadata objects
-			if (metadata === undefined)
-				delete this.cache[id];
-			else
-				e.metadata = metadata;
-		});
+				// clear cache or restore metadata objects
+				if (metadata === undefined)
+					delete this.cache.c[id];
+				else
+					e.metadata = metadata;
+			});
 	}
 
 	public afterTick()
@@ -84,7 +88,7 @@ export class SegmentStringStorage
 		const freeSegments = _.difference(this.availableSegments, segmentBuffer.getUsedSegments());
 		const maxSize = segmentBuffer.maxSize;
 
-		_.forOwn(this.cache, (cache, label) =>
+		_.forOwn(this.cache.c, (cache, label) =>
 		{
 			if (cache.v <= cache.metadata.v)
 				return;
@@ -92,6 +96,7 @@ export class SegmentStringStorage
 			if (cache.data === undefined)
 				return;
 
+			// releasing segments
 			cache.metadata.ids.forEach((id) => segmentBuffer.clear(id));
 
 			if (cache.data.length <= maxSize)
@@ -147,22 +152,24 @@ export class SegmentStringStorage
 	public setString(label: string, data: string)
 	{
 		// updating cached version if exists
-		const cache = this.cache[label];
+		const cache = this.cache.c[label];
 		if (cache !== undefined)
 		{
+			log.error(`new data for '${label}'`);
 			cache.v++;
 			cache.data = data;
 			return;
 		}
 
-		let metadata = this.memory.m[label];
+		let metadata = root.memory.m[label];
 		if (metadata === undefined)
 		{
+			log.error(`new '${label}'`);
 			metadata = { v: -1, ids: [] };
-			this.memory.m[label] = metadata;
+			root.memory.m[label] = metadata;
 		}
 
-		this.cache[label] =
+		this.cache.c[label] =
 		{
 			v: metadata.v + 1,
 			data,
@@ -173,11 +180,11 @@ export class SegmentStringStorage
 	public getString(label: string): { status: eSegmentBufferStatus, data?: string, partial?: string }
 	{
 		// if no metadata, doesn't exist
-		const metadata = this.memory.m[label];
+		const metadata = root.memory.m[label];
 		if (metadata === undefined)
 			return { status: eSegmentBufferStatus.Empty };
 
-		const cache = this.cache[label];
+		const cache = this.cache.c[label];
 		if (cache !== undefined && cache.v >= metadata.v)
 			return { status: eSegmentBufferStatus.Ready, data: cache.data };
 
@@ -203,12 +210,12 @@ export class SegmentStringStorage
 				metadata,
 			};
 
-			this.cache[label] = cache;
+			this.cache.c[label] = cache;
 
 			return { status: eSegmentBufferStatus.Ready, data: cache.data };
 		}
 
-		if (parts.length === 0)
+		if (parts.length >= 0)
 			return { status, partial: parts.join("") };
 
 		return { status };
