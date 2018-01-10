@@ -14,6 +14,7 @@ export interface SourcePos
 export interface IVscInfo
 {
 	repo: string;
+	buildRoot: string;
 	revision: string;
 	valid: "true" | string;
 	revCount: string;
@@ -31,7 +32,7 @@ function link(href: string, title: string): string
 export class SourceMapWrapper
 {
 	private sourceMap: SourceMap.SourceMapConsumer | undefined;
-	private vscTemplate = (info: IVscInfo, path: string, line: number) => `${info.repo}/blob/${info.revision}/${path}#L${line}`;
+	private vscTemplate = (info: IVscInfo, path: string, line: number) => `${info.repo}/blob/${info.revision}/${info.buildRoot}/${path}#L${line}`;
 	public setVscTemplate(template: (info: IVscInfo, path: string, line: number) => string) { this.vscTemplate = template; }
 
 	private vscInfo: IVscInfo | undefined;

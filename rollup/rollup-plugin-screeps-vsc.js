@@ -12,6 +12,7 @@ export default function screepsVsc()
 			"$branch": `${git.branch()}`,
 			"$revCount": `${git.count()}`,
 			"$revValid": "true",
+			"$buildRoot": "x/x",
 		},
 	});
 }
