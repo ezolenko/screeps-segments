@@ -59,6 +59,12 @@ export class SegmentStringStorage
 		};
 	}
 
+	public reset()
+	{
+		segmentBuffer.reset();
+		this.reinitMemory();
+	}
+
 	public beforeTick()
 	{
 		segmentBuffer.beforeTick();

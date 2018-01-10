@@ -13,6 +13,12 @@ export class SegmentsStorageTest extends ScreepsTest<{}>
 		this.profileInstance(segmentStorage, SegmentStringStorage.name);
 	}
 
+	public reset()
+	{
+		super.reset();
+		segmentStorage.reset();
+	}
+
 	public afterTick()
 	{
 		segmentStorage.visualize(3);

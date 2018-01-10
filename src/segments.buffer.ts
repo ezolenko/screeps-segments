@@ -98,6 +98,11 @@ export class SegmentBuffer
 		};
 	}
 
+	public reset()
+	{
+		this.reinitMemory();
+	}
+
 	public beforeTick()
 	{
 		segmentWrapper.beforeTick();

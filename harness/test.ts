@@ -27,6 +27,7 @@ export interface IScreepsTest
 	afterTick(): void;
 	cleanup(): void;
 	report(): string;
+	reset(): void;
 }
 
 declare global
@@ -87,6 +88,11 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 		return root.memory.suites[this.constructor.name];
 	}
 
+	public reset()
+	{
+		//
+	}
+
 	private initMemory()
 	{
 		if (root.memory.suites[this.constructor.name] === undefined)
@@ -104,6 +110,7 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 				asserts: {},
 				yield: {},
 			};
+			this.reset();
 		}
 	}
 
