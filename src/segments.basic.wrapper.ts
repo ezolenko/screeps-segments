@@ -1,4 +1,4 @@
-import { Grid, Text } from "./segment.visualizer";
+import { Grid, Text } from "./segments.visualizer";
 import { log } from "./ilogger";
 
 export class SegmentsBasicWrapper

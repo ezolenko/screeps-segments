@@ -36,6 +36,11 @@ class TestRunner extends ScreepsTest<ITestRunnerMemory>
 		super(sourceMap);
 	}
 
+	public reset()
+	{
+		//
+	}
+
 	public beforeTick()
 	{
 		super.beforeTick();

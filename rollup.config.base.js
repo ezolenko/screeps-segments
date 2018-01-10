@@ -1,7 +1,6 @@
 import ts from "rollup-plugin-typescript2";
 import nodeResolve from "rollup-plugin-node-resolve";
 import commonjs from "rollup-plugin-commonjs";
-import cleanup from "rollup-plugin-cleanup";
 import fileSize from "rollup-plugin-filesize";
 import sourcemaps from "rollup-plugin-sourcemaps";
 import screepsSourcemap from "./rollup/rollup-plugin-screeps-sourcemap";
@@ -18,7 +17,6 @@ export default {
 		ts({ verbosity: 2 }),
 		nodeResolve({ jsnext: true, main: true }),
 		commonjs({ ignoreGlobal: true, include: "node_modules/**" }),
-		cleanup(),
 		fileSize(),
 		screepsSourcemap(),
 		screepsUpload(),

@@ -16,6 +16,11 @@ export interface ISegmentsBufferTestMemory
 @TestDefinition(0)
 export class SegmentsBufferTest extends ScreepsTest<ISegmentsBufferTestMemory>
 {
+	public reset()
+	{
+		segmentBuffer.reset();
+	}
+
 	public beforeTick()
 	{
 		super.beforeTick();

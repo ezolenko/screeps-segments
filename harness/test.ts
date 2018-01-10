@@ -74,6 +74,7 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 		this.initMemory();
 	}
 
+	public abstract reset(): void;
 	public abstract run(): boolean;
 
 	private intents: Map<string, () => void> = new Map();
@@ -86,11 +87,6 @@ export abstract class ScreepsTest<M extends {}> extends TestProfiler implements 
 	protected get m()
 	{
 		return root.memory.suites[this.constructor.name];
-	}
-
-	public reset()
-	{
-		//
 	}
 
 	private initMemory()

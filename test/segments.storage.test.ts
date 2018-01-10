@@ -15,7 +15,6 @@ export class SegmentsStorageTest extends ScreepsTest<{}>
 
 	public reset()
 	{
-		super.reset();
 		segmentStorage.reset();
 	}
 
