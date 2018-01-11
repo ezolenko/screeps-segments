@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "",
   "main": "./dist/lib/lib.js",
+  "typings": "./dist/lib/lib/lib.ts",
   "repository": "ezolenko/screeps-segments",
   "scripts": {
     "tslint": "tslint 'src/**/*.ts'; echo",
