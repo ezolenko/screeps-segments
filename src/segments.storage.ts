@@ -1,6 +1,7 @@
 import { eSegmentBufferStatus, segmentBuffer } from "./segments.buffer";
 import { log } from "./ilogger";
 import { IMemoryRoot } from "./memory.root";
+import { tracker } from "./runtime.tracker";
 
 export interface ISegmentStorageMetadata
 {
@@ -24,6 +25,7 @@ export interface ISegmentStorage
 	version: number;
 	initTick: number;
 	m: {[label: string]: ISegmentStorageMetadata; };
+	clearCache: { [nodeId: string]: { [label: string]: 1 | undefined } | undefined };
 }
 
 declare global
@@ -56,6 +58,7 @@ export class SegmentStringStorage
 			version: this.version,
 			initTick: Game.time,
 			m: {},
+			clearCache: {},
 		};
 	}
 
@@ -75,6 +78,22 @@ export class SegmentStringStorage
 		if (root.memory.initTick !== this.cache.initTick)
 			this.cache = { initTick: root.memory.initTick, c: {} };
 		else
+		{
+			// clearing marked entries
+			const clear = root.memory.clearCache[tracker.currentNodeId];
+			_.forOwn(clear!, (_e, key) => delete this.cache.c[key!]);
+			root.memory.clearCache[tracker.currentNodeId] = undefined;
+
+			// clearing marks for inactive nodes
+			if (Game.time % 10 === 0)
+			{
+				_.forOwn(root.memory.clearCache, (_e, key) =>
+				{
+					if (!_.has(tracker.activeNodes, key!))
+						delete root.memory.clearCache[key!];
+				});
+			}
+
 			_.forOwn(this.cache, (e, key) =>
 			{
 				const id = Number(key);
@@ -87,6 +106,7 @@ export class SegmentStringStorage
 				else
 					e.metadata = metadata;
 			});
+		}
 	}
 
 	public afterTick()
@@ -155,7 +175,7 @@ export class SegmentStringStorage
 		return freeSegments;
 	}
 
-	public setString(label: string, data: string)
+	public set(label: string, data: string)
 	{
 		// updating cached version if exists
 		const cache = this.cache.c[label];
@@ -183,7 +203,7 @@ export class SegmentStringStorage
 		};
 	}
 
-	public getString(label: string): { status: eSegmentBufferStatus, data?: string, partial?: string }
+	public get(label: string): { status: eSegmentBufferStatus, data?: string, partial?: string }
 	{
 		// if no metadata, doesn't exist
 		const metadata = root.memory.m[label];
@@ -225,6 +245,30 @@ export class SegmentStringStorage
 			return { status, partial: parts.join("") };
 
 		return { status };
+	}
+
+	public clear(label: string): void
+	{
+		delete this.cache.c[label];
+
+		const metadata = root.memory.m[label];
+		if (metadata === undefined)
+			return;
+
+		metadata.ids.forEach((id) => segmentBuffer.clear(id));
+
+		const nodes = tracker.activeNodes;
+		_.keys(nodes).forEach((nodeId) =>
+		{
+			if (nodeId === tracker.currentNodeId)
+				return;
+			if (root.memory.clearCache[nodeId] === undefined)
+				root.memory.clearCache[nodeId] = { [label]: 1 };
+			else
+				root.memory.clearCache[nodeId]![label] = 1;
+		});
+
+		delete root.memory.m[label];
 	}
 
 	public visualize(scale: number)

@@ -100,7 +100,7 @@ export class SegmentBuffer
 
 	public reset()
 	{
-		this.reinitMemory();
+		this.forgetAll();
 	}
 
 	public beforeTick()
@@ -118,6 +118,16 @@ export class SegmentBuffer
 			const clear = root.memory.clearCache[tracker.currentNodeId];
 			_.forOwn(clear!, (_e, key) => delete this.cache.c[key!]);
 			root.memory.clearCache[tracker.currentNodeId] = undefined;
+
+			// clearing marks for inactive nodes
+			if (Game.time % 10 === 0)
+			{
+				_.forOwn(root.memory.clearCache, (_e, key) =>
+				{
+					if (!_.has(tracker.activeNodes, key!))
+						delete root.memory.clearCache[key!];
+				});
+			}
 
 			// clearing deleted cache or updating metadata reference
 			_.forOwn(this.cache, (e, key) =>

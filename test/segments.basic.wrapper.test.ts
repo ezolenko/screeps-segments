@@ -19,6 +19,11 @@ export class SegmentsBasicWrapperTest extends ScreepsTest<ISegmentsBasicWrapperT
 		super(sourceMap);
 	}
 
+	public reset()
+	{
+		// 
+	}
+
 	public beforeTick()
 	{
 		super.beforeTick();

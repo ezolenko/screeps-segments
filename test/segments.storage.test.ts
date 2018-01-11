@@ -26,24 +26,24 @@ export class SegmentsStorageTest extends ScreepsTest<{}>
 	}
 
 	// tslint:disable:no-string-literal
-	public runSetGet(_out: { onAfterTick?: (() => void) | undefined }): boolean
+	public runSetGetClear(_out: { onAfterTick?: (() => void) | undefined }): boolean
 	{
-		const label = "label1";
+		const label = "label2";
 		return this.runSequence(1,
 		[
 			(iteration) =>
 			{
-				const original = this.generateData(iteration, 13, 2.5 * segmentBuffer.maxSize);
+				const original = this.generateData(iteration, 14, 2.5 * segmentBuffer.maxSize);
 				return this.delayFinish(1, () =>
 				{
-					segmentStorage.setString(label, original);
+					segmentStorage.set(label, original);
 
 					this.assertEqual(segmentStorage["cache"].c[label].data, original);
 					this.assertEqual(segmentStorage["cache"].c[label].v, iteration);
 					this.assertEqual(segmentStorage["cache"].c[label].metadata.v, iteration - 1);
 					this.assertEqual(segmentStorage["memory"].m[label].v, iteration - 1);
 
-					const { status, data } = segmentStorage.getString(label);
+					const { status, data } = segmentStorage.get(label);
 
 					this.assertEqual(status, eSegmentBufferStatus.Ready);
 					this.assertEqual(data, original);
@@ -53,13 +53,13 @@ export class SegmentsStorageTest extends ScreepsTest<{}>
 			},
 			(iteration) =>
 			{
-				const original = this.generateData(iteration, 13, 2.5 * segmentBuffer.maxSize);
+				const original = this.generateData(iteration, 14, 2.5 * segmentBuffer.maxSize);
 
 				this.assertEqual(segmentBuffer.getUsedSegments().length, 3);
 
 				this.assertEqual(segmentStorage["memory"].m[label].v, iteration);
 
-				const { status, data } = segmentStorage.getString(label);
+				const { status, data } = segmentStorage.get(label);
 
 				if (status === eSegmentBufferStatus.NextTick || status === eSegmentBufferStatus.Delayed)
 					return false;
@@ -73,9 +73,29 @@ export class SegmentsStorageTest extends ScreepsTest<{}>
 
 				return true;
 			},
-			(_iteration) =>
+			() =>
 			{
-				this.assertEqual(segmentBuffer.getUsedSegments().length, 3);
+				return this.delayFinish(1, () =>
+				{
+					this.assertEqual(segmentBuffer.getUsedSegments().length, 3);
+
+					segmentStorage.clear(label);
+
+					this.assertEqual(segmentBuffer.getUsedSegments().length, 0);
+
+					this.assertEqual(segmentStorage["cache"].c[label], undefined);
+					this.assertEqual(segmentStorage["memory"].m[label], undefined);
+
+					return true;
+				});
+			},
+			() =>
+			{
+				this.assertEqual(segmentBuffer.getUsedSegments().length, 0);
+
+				this.assertEqual(segmentStorage["cache"].c[label], undefined);
+				this.assertEqual(segmentStorage["memory"].m[label], undefined);
+
 				return true;
 			},
 		]);
@@ -100,7 +120,7 @@ export class SegmentsStorageTest extends ScreepsTest<{}>
 				this.assertEqual(segmentBuffer.getUsedSegments().length, 0);
 				return true;
 			},
-			() => this.runSetGet(out),
+			() => this.runSetGetClear(out),
 		]);
 
 		segmentStorage.afterTick();
