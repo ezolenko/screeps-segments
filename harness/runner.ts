@@ -1,7 +1,7 @@
 import { ScreepsTest, IScreepsTest, initializeMemory, getCodeId } from "./test";
 import { SourceMapWrapper } from "./sourcemap";
 import { tracker } from "../src/runtime.tracker";
-import { log } from "../src/ilogger";
+import { log } from "../lib/lib";
 
 interface ITestRunnerMemory
 {

@@ -1,8 +1,7 @@
-import { segmentWrapper, SegmentsBasicWrapper } from "../lib/lib";
+import { segmentWrapper, SegmentsBasicWrapper, log } from "../lib/lib";
 import { ScreepsTest } from "../harness/test";
 import { TestDefinition } from "../harness/runner";
 import { SourceMapWrapper } from "../harness/sourcemap";
-import { log } from "../src/ilogger";
 
 export interface ISegmentsBasicWrapperTestMemory
 {
@@ -21,7 +20,7 @@ export class SegmentsBasicWrapperTest extends ScreepsTest<ISegmentsBasicWrapperT
 
 	public reset()
 	{
-		// 
+		//
 	}
 
 	public beforeTick()

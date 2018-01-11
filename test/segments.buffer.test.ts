@@ -1,7 +1,6 @@
 import { TestDefinition } from "../harness/runner";
 import { ScreepsTest } from "../harness/test";
-import { SegmentBuffer, eSegmentBufferStatus, segmentBuffer } from "../lib/lib";
-import { log } from "../src/ilogger";
+import { SegmentBuffer, eSegmentBufferStatus, segmentBuffer, log } from "../lib/lib";
 
 export interface ISegmentsBufferTestMemory
 {

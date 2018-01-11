@@ -1,7 +1,7 @@
 import { IScreepsTestProfilerMemory, TestProfiler } from "./profiler";
 import { SourceMapWrapper } from "./sourcemap";
 import { IMemoryRoot } from "../src/memory.root";
-import { log } from "../src/ilogger";
+import { log } from "../lib/lib";
 
 export interface IScreepsTestMemory extends IScreepsTestProfilerMemory
 {
