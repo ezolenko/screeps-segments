@@ -1,5 +1,5 @@
 import { eSegmentBufferStatus, segmentBuffer } from "./segments.buffer";
-import { log } from "./ilogger";
+import { log } from "./segments.logger";
 import { IMemoryRoot } from "./memory.root";
 import { tracker } from "./runtime.tracker";
 

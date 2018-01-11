@@ -20,15 +20,15 @@ declare global
 {
 	interface Memory
 	{
-		__runtime_tracker: IRuntimeTrackerMemory;
+		runtimes: IRuntimeTrackerMemory;
 	}
 }
 
 const root: IMemoryRoot<IRuntimeTrackerMemory> =
 {
-	get memory(): IRuntimeTrackerMemory { return Memory.__runtime_tracker; },
-	set memory(value: IRuntimeTrackerMemory) { Memory.__runtime_tracker = value; },
-	path: "Memory.__runtime_tracker",
+	get memory(): IRuntimeTrackerMemory { return Memory.runtimes; },
+	set memory(value: IRuntimeTrackerMemory) { Memory.runtimes = value; },
+	path: "Memory.runtimes",
 };
 
 const currentNodeId = String(Game.time);

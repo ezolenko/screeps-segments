@@ -1,6 +1,6 @@
 {
   "name": "screeps-segments",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "./dist/lib/lib.js",
   "repository": "ezolenko/screeps-segments",

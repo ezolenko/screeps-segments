@@ -1,5 +1,5 @@
 import { Grid, Text } from "./segments.visualizer";
-import { log } from "./ilogger";
+import { log } from "./segments.logger";
 
 export class SegmentsBasicWrapper
 {

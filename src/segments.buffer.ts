@@ -1,7 +1,7 @@
 import { tracker } from "./runtime.tracker";
 import { segmentWrapper } from "./segments.basic.wrapper";
 import { Grid, Text } from "./segments.visualizer";
-import { log } from "./ilogger";
+import { log } from "./segments.logger";
 import { IMemoryRoot } from "./memory.root";
 
 export interface ISegmentMetadata
