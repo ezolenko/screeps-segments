@@ -247,6 +247,14 @@ export class SegmentStringStorage
 		return { status };
 	}
 
+	public getIds(label: string): number[] | undefined
+	{
+		const metadata = root.memory.m[label];
+		if (metadata === undefined)
+			return;
+		return metadata.ids;
+	}
+
 	public clear(label: string): void
 	{
 		delete this.cache.c[label];

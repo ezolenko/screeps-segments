@@ -502,7 +502,6 @@ class SegmentBuffer {
         return { status: exports.eSegmentBufferStatus.Delayed };
     }
     set(id, data) {
-        exports.log.info(`SegmentBuffer: setting ${id}`);
         const cache = this.cache.c[id];
         if (cache !== undefined) {
             cache.d = data;
@@ -734,6 +733,12 @@ class SegmentStringStorage {
         if (parts.length >= 0)
             return { status, partial: parts.join("") };
         return { status };
+    }
+    getIds(label) {
+        const metadata = root$2.memory.m[label];
+        if (metadata === undefined)
+            return;
+        return metadata.ids;
     }
     clear(label) {
         delete this.cache.c[label];

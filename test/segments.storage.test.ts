@@ -48,6 +48,11 @@ export class SegmentsStorageTest extends ScreepsTest<{}>
 					this.assertEqual(status, eSegmentBufferStatus.Ready);
 					this.assertEqual(data, original);
 
+					const ids = segmentStorage.getIds(label);
+					this.assertNotEqual(ids, undefined);
+					if (ids)
+						this.assertEqual(ids.length, 0);
+
 					return true;
 				});
 			},
@@ -56,6 +61,11 @@ export class SegmentsStorageTest extends ScreepsTest<{}>
 				const original = this.generateData(iteration, 14, 2.5 * segmentBuffer.maxSize);
 
 				this.assertEqual(segmentBuffer.getUsedSegments().length, 3);
+
+				const ids = segmentStorage.getIds(label);
+				this.assertNotEqual(ids, undefined);
+				if (ids)
+					this.assertEqual(ids.length, 3);
 
 				this.assertEqual(segmentStorage["memory"].m[label].v, iteration);
 
@@ -86,6 +96,9 @@ export class SegmentsStorageTest extends ScreepsTest<{}>
 					this.assertEqual(segmentStorage["cache"].c[label], undefined);
 					this.assertEqual(segmentStorage["memory"].m[label], undefined);
 
+					const ids = segmentStorage.getIds(label);
+					this.assertEqual(ids, undefined);
+
 					return true;
 				});
 			},
@@ -95,6 +108,9 @@ export class SegmentsStorageTest extends ScreepsTest<{}>
 
 				this.assertEqual(segmentStorage["cache"].c[label], undefined);
 				this.assertEqual(segmentStorage["memory"].m[label], undefined);
+
+				const ids = segmentStorage.getIds(label);
+				this.assertEqual(ids, undefined);
 
 				return true;
 			},

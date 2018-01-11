@@ -347,7 +347,6 @@ export class SegmentBuffer
 
 	public set(id: number, data: string)
 	{
-		log.info(`SegmentBuffer: setting ${id}`);
 		// updating cached version if exists
 		const cache = this.cache.c[id];
 		if (cache !== undefined)

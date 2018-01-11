@@ -35,6 +35,7 @@ export declare class SegmentStringStorage {
         data?: string;
         partial?: string;
     };
+    getIds(label: string): number[] | undefined;
     clear(label: string): void;
     visualize(scale: number): void;
 }
