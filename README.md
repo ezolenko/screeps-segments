@@ -66,6 +66,7 @@ if (res.status === eSegmentBufferStatus.Delayed)
 segmentStorage.clear("label3");
 
 const ids = segmentStorage.getIds("label4"); 
-// in case you need to know which segments data is written in (for example to integrate with screeps-stats-lib). Can be undefined for several ticks before write comes through.
+// in case you need to know which segments data is written in (for example to integrate with screeps-stats-lib). 
+// Can be undefined for several ticks before write comes through.
 
 ```
